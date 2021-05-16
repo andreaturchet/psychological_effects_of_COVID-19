@@ -1,20 +1,22 @@
-
 ---
   title: "Covid19-stress-related"
-subtitle: Analyzing stress and psychological effects of Covid-19
+subtitle: "Analyzing stress and psychological effects of Covid-19"
 output:
-  html_notebook:
-  toc: yes
-toc_float: yes
-html_document:
+  html_document:
   df_print: paged
 toc: yes
+editor_options: 
+  chunk_output_type: inline
 ---
   
- ```{r, include = FALSE}
+  ``` {r setup, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r}
 library(pacman)
 p_load(qualtRics, tidyverse, stringr, multicon, psych,
-       dplyr)
+       dplyr,plyr,plotly,XLConnect,sf,rworldmap,RColorBrewer)
 ```
 
 # load csv survey
@@ -26,13 +28,6 @@ d <- read_survey("csv-choice.csv")
 ```{r}
 d <- filter(d, Consent == "Yes") %>% 
   filter(Dem_age >= 18)
-```
-# How many people answer the survey in IT?
-```{r}
-d %>% 
-  filter(UserLanguage == "IT") %>% 
-  count(Country) %>% 
-  arrange(desc(n))
 ```
 
 #The marital status variable was mixed up, with the exception of English. The variable was recoded to correct for that problem.
@@ -129,7 +124,7 @@ d <- d %>% mutate_at(
   "Agree" = 5,
   "Strongly agree" = 6,
   "Does not apply to my current situation" = 99
-  )
+)
 ```
 
 #Trust in the country’s measures
@@ -159,11 +154,150 @@ d <- d %>%
          "Scale_SLON_2" = Scale_PSS10_UCLA_12,
          "Scale_SLON_3" = Scale_PSS10_UCLA_13) 
 ```
+
 #cleaned dataset (beta)
 ```{r}
 cleaned_d <- d[, c(5, 7, 10, 12:151)]
 ```
 
 
+#let's start analyzing data
 
+#what is the age of the respondents in eu?
+```{r}
+target <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic",
+            "Denmark","Estonia","Finland","France","Germany","Greece","Hungary",
+            "Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta",
+            "Netherlands","Poland","Portugal","Romania","Slovakia","Slovenia",
+            "Spain","Sweden")
 
+EU <- filter(cleaned_d, Country %in% target)  
+ggplot(EU)+
+  stat_count(mapping=aes(Dem_age,fill=Country))
+```
+
+#what is the gender of the respondents? note: Missing values are omitted
+```{r}
+ggplot(EU %>%
+         filter(!is.na(Dem_gender)), aes(x =Dem_gender))+
+  stat_count()
+```
+
+#what type of work do the respondents? note: Missing values are omitted
+```{r}
+ggplot(EU %>%
+         filter(!is.na(Dem_employment)), aes(x =Dem_employment))+
+  stat_count()
+```
+
+#analyzing stress level in europe
+
+#PSS scores are obtained by reversing responses (e.g., 0 = 4, 1 = 3, 2 = 2, 3 = 1 & 4 = 0) to the four positively stated items (items 4, 5, 7, & 8) and then summing across all scale items. A short 4 item scale can be made from questions 2, 4, 5 and 10 of the PSS 10 item scale.
+#note that the na values are obmitted
+```{r}
+eu_stress <- select(EU,Country,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
+  ddply( .(Country), summarize,
+         Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
+         Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
+         Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
+         Rate_PSS10_UCLA4=mean(Scale_PSS10_UCLA_4,na.rm=TRUE),
+         Rate_PSS10_UCLA5=mean(Scale_PSS10_UCLA_5,na.rm=TRUE),
+         Rate_PSS10_UCLA6=mean(Scale_PSS10_UCLA_6,na.rm=TRUE),
+         Rate_PSS10_UCLA7=mean(Scale_PSS10_UCLA_7,na.rm=TRUE),
+         Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
+         Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
+         Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
+  mutate(total_stress = rowMeans(select(., -Country)))
+
+ggplot(eu_stress, aes(x=total_stress, y=Country)) +
+  geom_col(fill= "#00abff")
+```
+#Visualizing a detailed map of stress level in Europe
+```{r}
+worldMap <- getMap()
+## identify EU countries
+show <- which(worldMap$NAME %in% eu_stress$Country)
+
+## WORLD coordinates
+## this will be used as the background and will include non EU countries
+plotCoords <-
+  lapply(seq(worldMap$NAME),
+         function(x) {
+           ## collect long/lat in dataframe
+           df <- lapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) x@coords)
+           df <- do.call("rbind", as.list(df))
+           df <- data.frame(df)
+           
+           ## add geographical name
+           df$region <- as.character(worldMap$NAME[x])
+           if (is.na(worldMap$NAME[x])) df$region <- "NONAME"
+           
+           ## add unique polygon identifier
+           id <-
+             rep(seq_along(worldMap@polygons[[x]]@Polygons),
+                 sapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) nrow(x@coords)))
+           df$group <- paste0(df$region, id)
+           
+           ## add column names and return dataframe
+           colnames(df) <- list("long", "lat", "region", "group")
+           return(df)
+         })
+plotCoords <- do.call("rbind", plotCoords)
+
+## add EU identifier
+plotCoords$EU <- 0
+plotCoords$EU[which(plotCoords$region %in% eu_stress$Country)] <- 1
+
+## for some reason, this group gives a horizontal segment across Europe
+plotCoords <- plotCoords[plotCoords$group != "United States4", ]
+
+## EU coordinates
+showCoords <-
+  lapply(show,
+         function(x) {
+           ## collect long/lat in dataframe
+           df <- lapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) x@coords)
+           df <- do.call("rbind", as.list(df))
+           df <- data.frame(df)
+           
+           ## add geographical name
+           df$region <- as.character(worldMap$NAME[x])
+           if (is.na(worldMap$NAME[x])) df$region <- "NONAME"
+           
+           ## add unique polygon identifier
+           id <-
+             rep(seq_along(worldMap@polygons[[x]]@Polygons),
+                 sapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) nrow(x@coords)))
+           df$group <- paste0(df$region, id)
+           
+           ## add column names and return dataframe
+           colnames(df) <- list("long", "lat", "region", "group")
+           return(df)
+         })
+showCoords <- do.call("rbind", showCoords)
+
+## add total stress level category
+showCoords$total_stress<-
+  eu_stress$total_stress[match(showCoords$region, eu_stress$Country)]
+showCoords$total_stress <-as.numeric(showCoords$total_stress, unique(showCoords$total_stress))
+
+#ggploting
+ggplot() +
+  geom_polygon(
+    data = plotCoords,
+    aes(x = long, y = lat, group = group),
+    fill = "lightgrey", colour = "darkgrey", size = 0.1) +
+  geom_polygon(
+    data = showCoords,
+    aes(x = long, y = lat, group = group, fill = total_stress),
+    colour = "black", size = 0.1) +
+  scale_fill_distiller(name = "Mean", palette = "Greens") +
+  scale_x_continuous(element_blank(), breaks = NULL) +
+  scale_y_continuous(element_blank(), breaks = NULL) +
+  coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73)) 
+
+```
