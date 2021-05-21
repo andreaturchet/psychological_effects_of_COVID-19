@@ -16,7 +16,7 @@ knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
 ```{r}
 library(pacman)
 p_load(qualtRics, tidyverse, stringr, multicon, psych,
-       dplyr,plyr,plotly,XLConnect,sf,rworldmap,RColorBrewer)
+       dplyr,plyr,plotly,sf,rworldmap,RColorBrewer,data.table)
 ```
 
 # load csv survey
@@ -210,7 +210,8 @@ eu_stress <- select(EU,Country,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
   mutate(total_stress = rowMeans(select(., -Country)))
 
 ggplot(eu_stress, aes(x=total_stress, y=Country)) +
-  geom_col(fill= "#00abff")
+  geom_col(fill= "#00abff")+
+  xlim(0,5)
 ```
 #Visualizing a detailed map of stress level in Europe
 ```{r}
@@ -300,4 +301,29 @@ ggplot() +
   scale_y_continuous(element_blank(), breaks = NULL) +
   coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73)) 
 
+```{r}
+#Sources of Distress among Europeans during the COVID-19 Pandemic
+
+eu_stress_source <- select(EU, Expl_Distress_1:Expl_Distress_24)%>%
+                    na.omit()
+
+eu_stress_source = data.frame(apply(eu_stress_source,2,function(x)mean(x[x<99]))) %>%
+  tibble::rownames_to_column(var = "col1") %>%
+  `colnames<-`(c("stress_source", "mean")) 
+ 
+
+ggplot(eu_stress_source, aes(stress_source, mean)) +
+  geom_col(fill= "#00abff")+
+  ylim(0,6)+
+  coord_flip()
+
 ```
+
+
+
+
+
+  
+
+
+   
