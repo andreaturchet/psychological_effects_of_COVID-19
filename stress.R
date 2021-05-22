@@ -193,10 +193,29 @@ ggplot(EU %>%
 #analyzing stress level in europe
 
 #PSS scores are obtained by reversing responses (e.g., 0 = 4, 1 = 3, 2 = 2, 3 = 1 & 4 = 0) to the four positively stated items (items 4, 5, 7, & 8) and then summing across all scale items. A short 4 item scale can be made from questions 2, 4, 5 and 10 of the PSS 10 item scale.
-#note that the na values are obmitted
+#note that the na values are omitted
+
 ```{r}
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 1] <- 5
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 2] <- 4
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 4] <- 2
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 5] <- 1
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 1] <- 5
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 2] <- 4
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 4] <- 2
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 5] <- 1
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 1] <- 5
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 2] <- 4
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 4] <- 2
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 5] <- 1
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 1] <- 5
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 2] <- 4
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 4] <- 2
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 5] <- 1
+
+
 eu_stress <- select(EU,Country,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
-  ddply( .(Country), summarize,
+         ddply( .(Country), summarize,
          Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
          Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
          Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
@@ -207,12 +226,18 @@ eu_stress <- select(EU,Country,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
          Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
          Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
          Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
-  mutate(total_stress = rowMeans(select(., -Country)))
+  mutate(total_stress = rowMeans(select(., -Country)))%>%
+  arrange(desc(total_stress))
+  
 
 ggplot(eu_stress, aes(x=total_stress, y=Country)) +
   geom_col(fill= "#00abff")+
   xlim(0,5)
+
+#which is the most stressed Country?
+eu_stress %>%  arrange(desc(total_stress))
 ```
+
 #Visualizing a detailed map of stress level in Europe
 ```{r}
 worldMap <- getMap()
@@ -296,7 +321,7 @@ ggplot() +
     data = showCoords,
     aes(x = long, y = lat, group = group, fill = total_stress),
     colour = "black", size = 0.1) +
-  scale_fill_distiller(name = "Mean", palette = "Greens") +
+  scale_fill_continuous(high = "#132B43", low = "#56B1F7", name="Mean")+
   scale_x_continuous(element_blank(), breaks = NULL) +
   scale_y_continuous(element_blank(), breaks = NULL) +
   coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73)) 
@@ -309,19 +334,20 @@ eu_stress_source <- select(EU, Expl_Distress_1:Expl_Distress_24)%>%
 
 eu_stress_source = data.frame(apply(eu_stress_source,2,function(x)mean(x[x<99]))) %>%
   tibble::rownames_to_column(var = "col1") %>%
-  `colnames<-`(c("stress_source", "mean")) 
+  `colnames<-`(c("stress_source", "mean")) %>%
+               arrange(desc(mean))
  
 
 ggplot(eu_stress_source, aes(stress_source, mean)) +
   geom_col(fill= "#00abff")+
   ylim(0,6)+
   coord_flip()
+#which is the main cause of stress?
+eu_stress_source %>% arrange(desc(mean))
 
 ```
 
-
-
-
+            
 
   
 
