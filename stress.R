@@ -300,10 +300,10 @@ ggplot() +
   scale_x_continuous(element_blank(), breaks = NULL) +
   scale_y_continuous(element_blank(), breaks = NULL) +
   coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73)) 
+```
 
-```{r}
 #Sources of Distress among Europeans during the COVID-19 Pandemic
-
+```{r}
 eu_stress_source <- select(EU, Expl_Distress_1:Expl_Distress_24)%>%
                     na.omit()
 
