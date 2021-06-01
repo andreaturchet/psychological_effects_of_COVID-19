@@ -176,22 +176,35 @@ EU <- filter(cleaned_d, Country %in% target)
 #fixing date visualization
 EU$RecordedDate <- as.Date(EU$RecordedDate , format= "%Y-%m-%d")
 
-ggplot(EU)+
-  stat_count(mapping=aes(Dem_age,fill=Country))
+ggplot(EU,aes(Dem_age))+
+  geom_bar(fill= "#00abff")
 ```
 
 #what is the gender of the respondents? note: Missing values are omitted
 ```{r}
-ggplot(EU %>%
-         filter(!is.na(Dem_gender)), aes(x =Dem_gender))+
-  stat_count()
+
+gnd <-count(EU$Dem_gender)
+ gnd = gnd[-4, ] 
+
+ plot_ly(gnd, labels = ~x, values = ~freq, type = 'pie') %>%
+   layout(title = "Gender of Respondents",          
+          xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+          yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+
 ```
+
 
 #what type of work do the respondents? note: Missing values are omitted
 ```{r}
-ggplot(EU %>%
-         filter(!is.na(Dem_employment)), aes(Dem_employment))+
-  stat_count()
+empl <-count(EU$Dem_employment)%>%
+empl =empl[-7, ] 
+
+plot_ly(empl, labels = ~x, values = ~freq, type = 'pie') %>%
+  layout(title = "Types of Employment of the Respondents",          
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
 ```
 
 #analyzing stress level in europe
