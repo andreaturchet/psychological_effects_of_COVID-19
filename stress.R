@@ -15,7 +15,7 @@ knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
 
 ```{r}
 library(pacman)
-p_load(qualtRics, tidyverse,ggrepel,stringr, multicon, psych,
+p_load(qualtRics, tidyverse,ggrepel,stringr, multicon, psych,ggthemes,
        dplyr,plyr,modelr,plotly,sf,rworldmap,RColorBrewer,data.table)
 ```
 
@@ -163,7 +163,7 @@ cleaned_d <- d[, c(5, 7, 10, 12:151)]
 
 #let's start analyzing data
 
-#what is the age of the respondents in eu?
+#filtering by EU Countries
 ```{r}
 target <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic",
             "Denmark","Estonia","Finland","France","Germany","Greece","Hungary",
@@ -175,9 +175,19 @@ EU <- filter(cleaned_d, Country %in% target)
 
 #fixing date visualization
 EU$RecordedDate <- as.Date(EU$RecordedDate , format= "%Y-%m-%d")
-
-ggplot(EU,aes(Dem_age))+
-  geom_bar(fill= "#00abff")
+```
+#what is the age of the respondents in eu? note: Missing values are omitted
+```{r}
+ggplot(subset(EU, !is.na(Dem_age)),aes(Dem_age))+
+  geom_bar(fill= "#006978")+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(x = "Age")+
+  xlim(18,99)+
+  theme(axis.title.y=element_blank(),axis.title.x = element_text(margin = margin(t=5)),
+        axis.text.y = element_text(size=10, hjust = 1),
+        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=15))+
+  ggtitle("Age of the Respondents")
 ```
 
 #what is the gender of the respondents? note: Missing values are omitted
@@ -190,14 +200,11 @@ gnd <-count(EU$Dem_gender)
    layout(title = "Gender of Respondents",          
           xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
           yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
-
-
 ```
-
 
 #what type of work do the respondents? note: Missing values are omitted
 ```{r}
-empl <-count(EU$Dem_employment)%>%
+empl <-count(EU$Dem_employment)
 empl =empl[-7, ] 
 
 plot_ly(empl, labels = ~x, values = ~freq, type = 'pie') %>%
@@ -212,7 +219,6 @@ plot_ly(empl, labels = ~x, values = ~freq, type = 'pie') %>%
 
 #PSS scores are obtained by reversing responses (e.g., 0 = 4, 1 = 3, 2 = 2, 3 = 1 & 4 = 0) to the four positively stated items (items 4, 5, 7, & 8) and then summing across all scale items. A short 4 item scale can be made from questions 2, 4, 5 and 10 of the PSS 10 item scale.
 #note that the na values are omitted
-
 ```{r}
 EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 1] <- 5
 EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 2] <- 4
@@ -231,7 +237,6 @@ EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 2] <- 4
 EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 4] <- 2
 EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 5] <- 1
 
-
 eu_stress <- select(EU,Country, Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
   ddply( .(Country), summarize,
          Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
@@ -246,14 +251,20 @@ eu_stress <- select(EU,Country, Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
          Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
   mutate(total_stress = rowMeans(select(., -Country)))
   
-
 ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
-  geom_col(fill= "#00abff")+
+  geom_col(fill= "#006978")+
   ylim(0,5)+
-  coord_flip()
+  coord_flip()+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(x = "Mean of stress levels")+
+  theme(axis.title.y=element_blank(),
+        axis.text.x = element_text( size = 8), axis.line.y = element_line(size = 0.5),
+        axis.text.y = element_text(size=10, hjust = 1),
+        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=15))+
+  ggtitle("Levels of stress by Country")
 
 ```
-
 #are men or women more stressed?
 ```{r}
 eu_stress_gender <- select(filter(EU,Dem_gender=="Male" | Dem_gender=="Female"), Dem_gender,
@@ -278,23 +289,28 @@ ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) +
                    y=0, 
                    yend=total_stress)) + 
   ylim(0,4)+
-  theme(axis.text.x = element_text(angle=65, vjust=0.6))
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
+        axis.text.x = element_text(angle=65, vjust=0.6, size = 10), axis.line.y = element_line(size = 0.5),
+        axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25),
+        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=15))+
+  ggtitle("Levels of stress by Gender")
 ```
-
-
 #How stress level changed in Europe during the first weeks of Covid pandemic?
 ```{r}
 eu_stress_2months <- select(filter(EU,RecordedDate=="2020-03-30"|
-                                     RecordedDate=="2020-04-07"|
-                                     RecordedDate=="2020-04-14"|
-                                     RecordedDate=="2020-04-21"|
-                                     RecordedDate=="2020-04-28"|
+                                     RecordedDate=="2020-04-06"|
+                                     RecordedDate=="2020-04-12"|
+                                     RecordedDate=="2020-04-18"|
+                                     RecordedDate=="2020-04-24"|
+                                     RecordedDate=="2020-04-30"|
                                      RecordedDate=="2020-05-05"|
-                                     RecordedDate=="2020-05-12"|
-                                     RecordedDate=="2020-05-20"|
-                                     RecordedDate=="2020-05-26"|
-                                     RecordedDate=="2020-06-5"|
-                                     RecordedDate=="2020-06-10"), 
+                                     RecordedDate=="2020-05-11"|
+                                     RecordedDate=="2020-05-17"|
+                                     RecordedDate=="2020-05-23"|
+                                     RecordedDate=="2020-05-30"), 
                             RecordedDate,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
   ddply( .(RecordedDate), summarize,
          Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
@@ -322,13 +338,23 @@ ggplot(eu_stress_2months, aes(RecordedDate, total_stress)) +
   geom_abline(intercept = mod$coefficients[1], 
               slope = mod$coefficients[2], 
               color = "red")+
-  ylim(0,3)
+  ylim(0,3)+
+  scale_x_date(date_breaks = "1 months", date_labels = "%B") +
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
+        axis.text.x=element_text(size=10,vjust=0.5,hjust = 1.25),axis.ticks = element_blank(),
+        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25),
+        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=10))+
+  ggtitle("Levels of stress during the first weeks of the pandemic")
+
 ```
 #the stress level in the first two weeks was higher than the predictive model, 
-#in the third week it dropped and then increased and repeated 
-#the cycle until the end of May. With the start of the summer 
-#season, in June, the stress level then dropped
-
+#in the third week it decreased a bit and then increased and repeated 
+#the cycle until the end of May. Unexpectedly in the end of the May the stress level 
+#increased again, it is weird because typically with the start of summer people should
+#be less stress; unfortunately we don't have any data that will confirm this trend.
 
 #Visualizing a detailed map of stress level in Europe
 ```{r}
@@ -413,10 +439,14 @@ ggplot() +
     data = showCoords,
     aes(x = long, y = lat, group = group, fill = total_stress),
     colour = "black", size = 0.1) +
-  scale_fill_continuous(high = "#132B43", low = "#56B1F7", name="Mean")+
+  scale_fill_continuous(high = "#132B43", low = "#56B1F7", name="Mean of stress levels")+
   scale_x_continuous(element_blank(), breaks = NULL) +
   scale_y_continuous(element_blank(), breaks = NULL) +
-  coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73)) 
+  coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73))+ 
+  labs(title = "Levels of stress during the first weeks of the pandemic",
+       caption = "Based on PSS Cohen Scale ")+
+  theme(plot.title = element_text(face = "bold",size = 15),
+        plot.caption = element_text(size = 10, hjust = 2.5))
 ```
 
 #Sources of Distress among Europeans during the COVID-19 Pandemic
@@ -428,12 +458,29 @@ eu_stress_source = data.frame(apply(eu_stress_source,2,function(x)mean(x[x<99]))
   tibble::rownames_to_column(var = "col1") %>%
   `colnames<-`(c("stress_source", "mean")) 
  
+listlab<-(c("No religious activities", "Not knowing how to stop covid-19",
+            "Feeling ashamed for acting differently","Adapt work to Digital Platforms",
+            "Access to necessities(food etc..)","Behavior of adults I live with",
+            "Behavior of childrens I live with","Adapt to social life on digital platforms",
+            "No trovels outside my Country","Loneliness","Time i spend in proximity to others",
+            "Children's education","Civil services(Police,sanitations..)","Income",
+            "Not knowing about developments with Covid-19","Time I spend inside","Work",
+            "Job prospect","No social activities","Worry over friends and relatives who live far away",
+            "Not knowing how long the measures will last","Risk of catching covid-19",
+            "Risk of being hospedalized or dying","National economy"))
 
 ggplot(eu_stress_source, aes(reorder(stress_source,mean), mean)) +
-  geom_col(fill= "#00abff")+
+  geom_col(fill= "#006978")+
   ylim(0,6)+
-  coord_flip()
-
+  coord_flip()+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  ggtitle("Sources of Distress among Europeans during the COVID-19 Pandemic")+
+  scale_x_discrete(label  = listlab)+
+  labs(y="Mean" )+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+        axis.title.x =  element_text(margin = margin(t = 5),hjust = 0.53),
+        axis.text.y=element_text(size=8), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5,size=10))
 ```
 #trust in insititutions
 #OECD guidelines on measuring insititutions trust:
@@ -446,35 +493,45 @@ eu_trust <- select(EU, OECD_insititutions_1:OECD_insititutions_6)%>%
 eu_trust = data.frame(apply(eu_trust,2,function(x)mean(x))) %>%
   tibble::rownames_to_column(var = "col1") %>%
   `colnames<-`(c("trust", "mean")) 
-
+lablist<-(c("Country's Governments","Country's civil Service","Country's Police",
+            "Governments effort against covid-19","WHO","Country's Healthcare system"))
 
 ggplot(eu_trust, aes(reorder(trust,mean), mean)) +
-  geom_col(fill= "#00abff")+
+  geom_col(fill= "#006978")+
   ylim(0,10)+
-  coord_flip()
-
+  coord_flip()+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  ggtitle("Trust in Institutions")+
+ scale_x_discrete(label  = lablist)+
+  labs(y="Mean" )+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+        axis.title.x =  element_text(margin = margin(t = 5)),
+        axis.text.y=element_text(size=8), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
 
 eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
   ddply( .(Country), summarize,
          Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
         arrange(desc( Rate_OECD_insititutions_4))
 
-
 ggplot(eu_mean_oecd4, aes(reorder(Country,Rate_OECD_insititutions_4),
                           Rate_OECD_insititutions_4 )) +
-  geom_col(fill= "#00abff")+
+  geom_col(fill= "#006978")+
   ylim(0,10)+
-  coord_flip()
-
-
+  coord_flip()+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  ggtitle("Trust towards governments")+
+  labs(y="Mean")+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+        axis.title.x =  element_text(margin = margin(t = 5)),
+        axis.text.y=element_text(size=10), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
 ```
 # in fact we see that Poland is the most stressed nation but also 
 # one of the Country in which the population trust least in their own government
 # Denmark, on the other hand, is the nation with the least stress related to Covid,
 # in fact it is also one of the nations in which the population trust
 # most in their own government
-
-
 
 #Trust in Country Measure: it was also asked participants to judge the appropriateness
 #of the countries’ measures in response to the COVID-19 on a scale from 0 (too little),
@@ -487,13 +544,20 @@ eu_trustinc <- select(EU,Country,Trust_countrymeasure) %>%
 
 
 ggplot(eu_trustinc, aes(reorder(Country, Mean), Mean)) +
-  geom_col(fill= "#00abff")+
+  geom_col(fill="#006978")+
   ylim(0,8)+
   geom_hline(yintercept=5)+
-  coord_flip()
-
+  coord_flip()+
+theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  ggtitle("Appropriateness of the countries’ measures")+
+  labs(y="Country", x="Mean")+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
+        axis.title.y =  element_text(margin = margin(r = 5)),
+        axis.title.x =  element_text(margin = margin(t = 5)),
+        axis.text.y=element_text(size=10), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
+        
 ```
-
 
 #another important observation concerns the correlation between confidence 
 #in the measures taken by governments to tackle covid and the actions 
@@ -526,7 +590,14 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
                    point.padding = 0.5,
                    min.segment.length = 0,
                    segment.color = 'grey50') +
-  theme_classic()+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  ggtitle("Trust towards the governments’handling of the pandemic")+
+  labs(y="Mean of Compliances", x="Mean of trust towards governemts efforts")+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
+       axis.title.y =  element_text(margin = margin(r = 5)),
+       axis.title.x =  element_text(margin = margin(t = 5)),
+       axis.text.y=element_text(size=10), plot.title = element_text(hjust = 0.5))+
   geom_abline(intercept = mod$coefficients[1], 
               slope = mod$coefficients[2], 
               color = "red")
@@ -539,21 +610,19 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
 #direction, Latvia reported lower levels of compliance than those the model predicted, 
 #given levels of trust.
 
-
-
 #will be government’s effort to handle Coronavirus more trusted over the time?
 ```{r}
 eu_trust2m <- select(filter(EU,RecordedDate=="2020-03-30"|
-                       RecordedDate=="2020-04-07"|
-                       RecordedDate=="2020-04-14"|
-                       RecordedDate=="2020-04-21"|
-                       RecordedDate=="2020-04-28"|
+                       RecordedDate=="2020-04-06"|
+                       RecordedDate=="2020-04-12"|
+                       RecordedDate=="2020-04-18"|
+                       RecordedDate=="2020-04-24"|
+                       RecordedDate=="2020-04-30"|
                        RecordedDate=="2020-05-05"|
-                       RecordedDate=="2020-05-12"|
-                       RecordedDate=="2020-05-20"|
-                       RecordedDate=="2020-05-26"|
-                       RecordedDate=="2020-06-5"|
-                       RecordedDate=="2020-06-10"),RecordedDate,OECD_insititutions_6) %>%
+                       RecordedDate=="2020-05-11"|
+                       RecordedDate=="2020-05-17"|
+                       RecordedDate=="2020-05-23"|
+                       RecordedDate=="2020-05-30"),RecordedDate,OECD_insititutions_6) %>%
   ddply( .(RecordedDate), summarize,
          Rate_OECD=mean(OECD_insititutions_6,na.rm=TRUE))
 
@@ -563,7 +632,16 @@ ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) +
                    xend=RecordedDate, 
                    y=0, 
                    yend=Rate_OECD)) + 
-  ylim(0,10)
+  ylim(0,10)+
+  scale_x_date(date_breaks = "1 months", date_labels = "%B") +
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(y = "Mean of trust towards governemts efforts")+
+  theme(axis.title.y = element_text(size = 10),axis.title.x=element_blank(),
+        axis.text.x=element_text(size=10,vjust=0.5,hjust = 1.25),axis.ticks = element_blank(),
+        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25),
+        plot.title = element_text(hjust = 0.5))+
+  ggtitle("Trust towards the governments’handling of the pandemic")
 
 ```
 #in the first four weeks the trust for government’s effort to handle Coronavirus 
