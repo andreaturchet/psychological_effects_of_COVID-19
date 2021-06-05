@@ -1,17 +1,7 @@
 ---
   title: "Covid19-stress-related"
 subtitle: "Analyzing stress and psychological effects of Covid-19"
-output:
-  html_document:
-  df_print: paged
-toc: yes
-editor_options: 
-  chunk_output_type: inline
 ---
-  
-  ``` {r setup, include=FALSE}
-knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
-```
 
 ```{r}
 library(pacman)
@@ -194,12 +184,12 @@ ggplot(subset(EU, !is.na(Dem_age)),aes(Dem_age))+
 ```{r}
 
 gnd <-count(EU$Dem_gender)
- gnd = gnd[-4, ] 
+gnd = gnd[-4, ] 
 
- plot_ly(gnd, labels = ~x, values = ~freq, type = 'pie') %>%
-   layout(title = "Gender of Respondents",          
-          xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-          yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+plot_ly(gnd, labels = ~x, values = ~freq, type = 'pie') %>%
+  layout(title = "Gender of Respondents",          
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
 ```
 
 #what type of work do the respondents? note: Missing values are omitted
@@ -250,7 +240,7 @@ eu_stress <- select(EU,Country, Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
          Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
          Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
   mutate(total_stress = rowMeans(select(., -Country)))
-  
+
 ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
   geom_col(fill= "#006978")+
   ylim(0,5)+
@@ -452,12 +442,12 @@ ggplot() +
 #Sources of Distress among Europeans during the COVID-19 Pandemic
 ```{r}
 eu_stress_source <- select(EU, Expl_Distress_1:Expl_Distress_24)%>%
-                    na.omit()
+  na.omit()
 
 eu_stress_source = data.frame(apply(eu_stress_source,2,function(x)mean(x[x<99]))) %>%
   tibble::rownames_to_column(var = "col1") %>%
   `colnames<-`(c("stress_source", "mean")) 
- 
+
 listlab<-(c("No religious activities", "Not knowing how to stop covid-19",
             "Feeling ashamed for acting differently","Adapt work to Digital Platforms",
             "Access to necessities(food etc..)","Behavior of adults I live with",
@@ -503,7 +493,7 @@ ggplot(eu_trust, aes(reorder(trust,mean), mean)) +
   theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
   ggtitle("Trust in Institutions")+
- scale_x_discrete(label  = lablist)+
+  scale_x_discrete(label  = lablist)+
   labs(y="Mean" )+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
         axis.title.x =  element_text(margin = margin(t = 5)),
@@ -512,7 +502,7 @@ ggplot(eu_trust, aes(reorder(trust,mean), mean)) +
 eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
   ddply( .(Country), summarize,
          Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
-        arrange(desc( Rate_OECD_insititutions_4))
+  arrange(desc( Rate_OECD_insititutions_4))
 
 ggplot(eu_mean_oecd4, aes(reorder(Country,Rate_OECD_insititutions_4),
                           Rate_OECD_insititutions_4 )) +
@@ -548,7 +538,7 @@ ggplot(eu_trustinc, aes(reorder(Country, Mean), Mean)) +
   ylim(0,8)+
   geom_hline(yintercept=5)+
   coord_flip()+
-theme_economist(dkpanel=TRUE) +
+  theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
   ggtitle("Appropriateness of the countries’ measures")+
   labs(y="Country", x="Mean")+
@@ -556,7 +546,7 @@ theme_economist(dkpanel=TRUE) +
         axis.title.y =  element_text(margin = margin(r = 5)),
         axis.title.x =  element_text(margin = margin(t = 5)),
         axis.text.y=element_text(size=10), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
-        
+
 ```
 
 #another important observation concerns the correlation between confidence 
@@ -568,7 +558,7 @@ theme_economist(dkpanel=TRUE) +
 ```{r}
 
 eu_conf_corr <- select(EU,Country,OECD_insititutions_6,Compliance_1:Compliance_6) %>%
-                ddply( .(Country), summarize,
+  ddply( .(Country), summarize,
          Rate_OECD=mean(OECD_insititutions_6,na.rm=TRUE),
          Rate_Compliance_1=mean(Compliance_1,na.rm=TRUE),
          Rate_Compliance_2=mean(Compliance_2,na.rm=TRUE),
@@ -595,9 +585,9 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
   ggtitle("Trust towards the governments’handling of the pandemic")+
   labs(y="Mean of Compliances", x="Mean of trust towards governemts efforts")+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
-       axis.title.y =  element_text(margin = margin(r = 5)),
-       axis.title.x =  element_text(margin = margin(t = 5)),
-       axis.text.y=element_text(size=10), plot.title = element_text(hjust = 0.5))+
+        axis.title.y =  element_text(margin = margin(r = 5)),
+        axis.title.x =  element_text(margin = margin(t = 5)),
+        axis.text.y=element_text(size=10), plot.title = element_text(hjust = 0.5))+
   geom_abline(intercept = mod$coefficients[1], 
               slope = mod$coefficients[2], 
               color = "red")
@@ -613,16 +603,16 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
 #will be government’s effort to handle Coronavirus more trusted over the time?
 ```{r}
 eu_trust2m <- select(filter(EU,RecordedDate=="2020-03-30"|
-                       RecordedDate=="2020-04-06"|
-                       RecordedDate=="2020-04-12"|
-                       RecordedDate=="2020-04-18"|
-                       RecordedDate=="2020-04-24"|
-                       RecordedDate=="2020-04-30"|
-                       RecordedDate=="2020-05-05"|
-                       RecordedDate=="2020-05-11"|
-                       RecordedDate=="2020-05-17"|
-                       RecordedDate=="2020-05-23"|
-                       RecordedDate=="2020-05-30"),RecordedDate,OECD_insititutions_6) %>%
+                              RecordedDate=="2020-04-06"|
+                              RecordedDate=="2020-04-12"|
+                              RecordedDate=="2020-04-18"|
+                              RecordedDate=="2020-04-24"|
+                              RecordedDate=="2020-04-30"|
+                              RecordedDate=="2020-05-05"|
+                              RecordedDate=="2020-05-11"|
+                              RecordedDate=="2020-05-17"|
+                              RecordedDate=="2020-05-23"|
+                              RecordedDate=="2020-05-30"),RecordedDate,OECD_insititutions_6) %>%
   ddply( .(RecordedDate), summarize,
          Rate_OECD=mean(OECD_insititutions_6,na.rm=TRUE))
 
@@ -648,9 +638,3 @@ ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) +
 #appears to increase, to then decrease in the fifth week and remain stable in the following three,
 #with the beginning of June and consequently of the summer season the population 
 #does not seem to like the countermeasures taken by the governments to handle the pandemic
-
-
-
-
-
-
