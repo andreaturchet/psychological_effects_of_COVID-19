@@ -37,6 +37,8 @@ p_load(qualtRics, tidyverse,ggrepel,stringr, multicon, psych,ggthemes,
 
 # Preamble
 
+![](/Users/ciwrl/Documents/GitHub/psychological_effects_of_COVID-19/covid.JPG)
+
 Analysis of the psychological effects of Covid-19 in Europe during the first weeks of the pandemic. Survey based on this  [project](https://covidistress.github.io) conducted by researchers around the world. Trying to map out all the factors, that might affects people’s psychological wellbeing and their ability to make good decisions during the COVID-19 (or "Coronavirus") outbreak all over the world. Researchers form many countries are collaborating on this project, to help scientists and decision makers to help and communicate.
 
 ## Why this project
@@ -221,8 +223,7 @@ ggplot(subset(EU, !is.na(Dem_age)),aes(Dem_age))+
   labs(x = "Age")+
   xlim(18,99)+
   theme(axis.title.y=element_blank(),axis.title.x = element_text(margin = margin(t=5)),
-        axis.text.y = element_text(size=10, hjust = 1),
-        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=15))
+        axis.text.y = element_text(size=10, hjust = 1))
 ```
 We can see that most respondents are aged between 20 and 40.
 
@@ -301,15 +302,12 @@ ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
   labs(y = "Mean of stress levels")+
   theme(axis.title.y=element_blank(),
         axis.text.x = element_text( size = 8), axis.line.y = element_line(size = 0.5),
-        axis.text.y = element_text(size=10, hjust = 1),
-        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=15))
+        axis.text.y = element_text(size=10, hjust = 1))
 
 ```
-
 Levels of stress were moderate or lower in many countries. Poland and Portugal reported the highest levels of stress in Europe,and Denmark and the Netherlands the lowest.
 
-
-## are men or women more stressed?
+## Are men or women more stressed?
 ```{r genderstress, echo=TRUE}
 eu_stress_gender <- select(filter(EU,Dem_gender=="Male" | Dem_gender=="Female"), Dem_gender,
                            Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
@@ -340,11 +338,49 @@ ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) +
   labs(y = "Mean of stress levels")+
   theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
         axis.text.x = element_text(angle=65, vjust=0.6, size = 10), axis.line.y = element_line(size = 0.5),
-        axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25),
-        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=15))
+        axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
+```
+In fact we can see that women results more stressed then men, as said in [this](https://psycnet.apa.org/record/1999-10525-006)
+Psychological article, many women also have to think about the housework and the children.
+
+## Which is the most stressed employment?
+```{r stress employment, echo=TRUE}
+eu_stress_empl <- select(EU, Dem_employment,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
+  ddply( .(Dem_employment), summarize,
+         Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
+         Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
+         Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
+         Rate_PSS10_UCLA4=mean(Scale_PSS10_UCLA_4,na.rm=TRUE),
+         Rate_PSS10_UCLA5=mean(Scale_PSS10_UCLA_5,na.rm=TRUE),
+         Rate_PSS10_UCLA6=mean(Scale_PSS10_UCLA_6,na.rm=TRUE),
+         Rate_PSS10_UCLA7=mean(Scale_PSS10_UCLA_7,na.rm=TRUE),
+         Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
+         Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
+         Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
+  mutate(total_stress = rowMeans(select(., -Dem_employment)))
 ```
 
-##How stress level changed in Europe during the first weeks of Covid pandemic?
+```{r stress employment plot, fig.cap="Stress level by employment"}
+ggplot(data=subset(eu_stress_empl, !is.na(Dem_employment)),
+       aes(Dem_employment, total_stress)) + 
+  geom_point(size=7) + 
+  geom_segment(aes(x=Dem_employment, 
+                   xend=Dem_employment, 
+                   y=0, 
+                   yend=total_stress)) + 
+  ylim(0,4)+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
+        axis.text.x = element_text(angle=50, vjust=0.6, size = 10, margin = margin(t=15)), axis.line.y = element_line(size = 0.5),
+        axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
+```
+Student is the most stressed category, as expected due to isolation and social distancing;
+Poland is the most stressed Nation and in fact in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
+article we can see that University Students recorded an highly level of stress during the Covid-19 pandemic
+
+## How stress level changed in Europe during the first weeks of Covid pandemic?
 ```{r stressduringtime, echo=TRUE}
 eu_stress_2months <- select(filter(EU,RecordedDate=="2020-03-30"|
                                      RecordedDate=="2020-04-06"|
@@ -371,7 +407,7 @@ eu_stress_2months <- select(filter(EU,RecordedDate=="2020-03-30"|
          Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
   mutate(total_stress = rowMeans(select(., -RecordedDate)))
 ```
-making a predictive model of stress during the first weeks of the pandemic.
+Making a predictive model of stress during the first weeks of the pandemic.
 ```{r pred, echo=TRUE}
 mod = lm( total_stress ~RecordedDate, data = eu_stress_2months)
 summary(mod)
@@ -395,11 +431,9 @@ ggplot(eu_stress_2months, aes(RecordedDate, total_stress)) +
   labs(y = "Mean of stress levels")+
   theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
         axis.text.x=element_text(size=10,vjust=0.5,hjust = 1.25),axis.ticks = element_blank(),
-        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25),
-        plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=10))
+        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 
 ```
-
 The stress level in the first two weeks was higher than the model predicted, 
 in the third week it decreased a bit and then increased and repeated 
 the cycle until the end of May. Unexpectedly in the end of the May the stress level 
@@ -494,14 +528,12 @@ ggplot() +
   scale_fill_continuous(high = "#132B43", low = "#56B1F7", name="Mean of stress levels")+
   scale_x_continuous(element_blank(), breaks = NULL) +
   scale_y_continuous(element_blank(), breaks = NULL) +
-  coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73))+
-  theme(plot.title = element_text(face = "bold",size = 15),
-        plot.caption = element_text(size = 10, hjust = 2.5))
+  coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73))
 ```
 
 # Sources of Distress 
 
-Now the analyzes will focus on the cause of the stress of the respondents, asking them questions regarding various factors that represent a source of stress.
+Now the analysis will focus on the cause of the stress of the respondents, asking them questions regarding various factors that represent a source of stress.
 
 ```{r stress source, echo=TRUE}
 eu_stress_source <- select(EU, Expl_Distress_1:Expl_Distress_24)%>%
@@ -534,15 +566,20 @@ ggplot(eu_stress_source, aes(reorder(stress_source,mean), mean)) +
   labs(y="Mean" )+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
         axis.title.x =  element_text(margin = margin(t = 5),hjust = 0.53),
-        axis.text.y=element_text(size=8), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5,size=10))
+        axis.text.y=element_text(size=8))
 ```
 The results indicate that most respondents are concerned about the state of the national economy. Economic considerations were followed closely by health-related risks, such as the risks of being hospitalised and of contracting the new disease.
 
-trust in insititutions
-OECD guidelines on measuring insititutions trust:
-https://www.oecd.org/governance/oecd-guidelines-on-measuring-trust-9789264278219-en.htm
-```{r}
+# Trust in institutions
+Partecipants were asked how much they trusted six key institutions in relation to the Covid-19 emergency
+(on ascale from 1 = not at all to 10 = completely), in particular partecipants were asked about their trust
+towards World Health Organization(WHO), the national governments’ efforts to tackle the COVID19, the Police,
+the civil service, the national government and the healt care systems.
 
+
+[Here](https://www.oecd.org/governance/oecd-guidelines-on-measuring-trust-9789264278219-en.htm) OECD guidelines on measuring institutions trust.
+
+```{r trust, echo=TRUE}
 eu_trust <- select(EU, OECD_insititutions_1:OECD_insititutions_6)%>%
   na.omit()
 
@@ -551,54 +588,91 @@ eu_trust = data.frame(apply(eu_trust,2,function(x)mean(x))) %>%
   `colnames<-`(c("trust", "mean")) 
 lablist<-(c("Country's Governments","Country's civil Service","Country's Police",
             "Governments effort against covid-19","WHO","Country's Healthcare system"))
+```
 
+```{r trustplot, fig.cap="Trust in Institutions"}
 ggplot(eu_trust, aes(reorder(trust,mean), mean)) +
   geom_col(fill= "#006978")+
   ylim(0,10)+
   coord_flip()+
   theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
-  ggtitle("Trust in Institutions")+
  scale_x_discrete(label  = lablist)+
   labs(y="Mean" )+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
         axis.title.x =  element_text(margin = margin(t = 5)),
-        axis.text.y=element_text(size=8), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
+        axis.text.y=element_text(size=8))
+```
+Europeans reported only medium level of trust at all, with the highest levels of trust for their countries’ healthcare system and the WHO.
+Notably, Countries governments reported the lowest level of trust.
 
-eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
+## How much citizens trust their own governments?
+```{r trustoecd1, echo="TRUE"}
+
+eu_mean_oecd1 <- select(EU,Country,OECD_insititutions_1) %>%
   ddply( .(Country), summarize,
-         Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
-        arrange(desc( Rate_OECD_insititutions_4))
+         Rate_OECD_insititutions_1=mean(OECD_insititutions_1,na.rm=TRUE))%>%
+        arrange(desc( Rate_OECD_insititutions_1))
+```
 
-ggplot(eu_mean_oecd4, aes(reorder(Country,Rate_OECD_insititutions_4),
-                          Rate_OECD_insititutions_4 )) +
+```{r trustoecd1plot, fig.cap="Trust towards governments"}
+ggplot(eu_mean_oecd1, aes(reorder(Country,Rate_OECD_insititutions_1),
+                          Rate_OECD_insititutions_1 )) +
   geom_col(fill= "#006978")+
   ylim(0,10)+
   coord_flip()+
   theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
-  ggtitle("Trust towards governments")+
   labs(y="Mean")+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
         axis.title.x =  element_text(margin = margin(t = 5)),
-        axis.text.y=element_text(size=10), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
+        axis.text.y=element_text(size=10))
 ```
- in fact we see that Poland is the most stressed nation but also 
- one of the Country in which the population trust least in their own government
- Denmark, on the other hand, is the nation with the least stress related to Covid,
- in fact it is also one of the nations in which the population trust
- most in their own government
 
-Trust in Country Measure: it was also asked participants to judge the appropriateness
+Noably, we see that Poland is the most stressed Nation but also 
+ one of the Country in which the population trust least in their own government
+  Finland, on the other hand, is the nation with the least stress related to Covid,
+ and it is also one of the Nations in which the population trust
+ most in their own government.
+
+ ## How much citizens trust the government’s effort to handle the pandemic?
+ ```{r trustoecd4, echo="TRUE"}
+ 
+ eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
+   ddply( .(Country), summarize,
+          Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
+   arrange(desc( Rate_OECD_insititutions_4))
+ ```
+ 
+ ```{r trustoecd4plot, fig.cap="Trust towards government’s effort to handle Coronavirus"}
+ ggplot(eu_mean_oecd4, aes(reorder(Country,Rate_OECD_insititutions_4),
+                           Rate_OECD_insititutions_4 )) +
+   geom_col(fill= "#006978")+
+   ylim(0,10)+
+   coord_flip()+
+   theme_economist(dkpanel=TRUE) +
+   scale_colour_economist()+
+   labs(y="Mean")+
+   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+         axis.title.x =  element_text(margin = margin(t = 5)),
+         axis.text.y=element_text(size=10))
+ ```
+ Similar patterns as the trust level in the governments, with Bulgaria that reported the lowest level of 
+ trust for the national effort to handle the pandemic.
+ 
+# Trust in Countries' Measure
+It was also asked participants to judge the appropriateness
 of the countries’ measures in response to the COVID-19 on a scale from 0 (too little),
 to 5 (appropriate, the black dashed line in the graph), to 10 (too much).
 
-```{r}
+
+```{r trustinc, echo=TRUE}
 eu_trustinc <- select(EU,Country,Trust_countrymeasure) %>%
   group_by(Country) %>%
   dplyr::summarize(Mean = mean(Trust_countrymeasure, na.rm=TRUE))
+```
 
-
+```{r trustincplot, fig.cap="Appropriateness of the countries’ measures"}
 ggplot(eu_trustinc, aes(reorder(Country, Mean), Mean)) +
   geom_col(fill="#006978")+
   ylim(0,8)+
@@ -606,23 +680,19 @@ ggplot(eu_trustinc, aes(reorder(Country, Mean), Mean)) +
   coord_flip()+
 theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
-  ggtitle("Appropriateness of the countries’ measures")+
   labs(y="Country", x="Mean")+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
         axis.title.y =  element_text(margin = margin(r = 5)),
         axis.title.x =  element_text(margin = margin(t = 5)),
-        axis.text.y=element_text(size=10), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
+        axis.text.y=element_text(size=10))
         
 ```
+Slovakia and Slovenia were those countries where citizens considered the measures stronger than necessary; in the plot, the vertical mid-line indicates that the measures are appropriate.
+France and Hungary citizens judged their governments’response less than appropriate.
 
-another important observation concerns the correlation between confidence 
-in the measures taken by governments to tackle covid and the actions 
-that the population has taken to reduce transmission;
-from what emerges Poland not having confidence in the measures taken
-by governments does not even try to reduce transmission,
-while Denmark is in the opposite situation
-```{r}
+### There is correlation between confidence in the measures taken by governments to tackle covid and the actions that the population has taken to reduce transmission?
 
+```{r confcorr, echo=TRUE}
 eu_conf_corr <- select(EU,Country,OECD_insititutions_6,Compliance_1:Compliance_6) %>%
                 ddply( .(Country), summarize,
          Rate_OECD=mean(OECD_insititutions_6,na.rm=TRUE),
@@ -632,12 +702,15 @@ eu_conf_corr <- select(EU,Country,OECD_insititutions_6,Compliance_1:Compliance_6
          Rate_Compliance_4=mean(Compliance_4,na.rm=TRUE),
          Rate_Compliance_5=mean(Compliance_5,na.rm=TRUE))%>%
   mutate(total_Compl = rowMeans(select(., -Country,-Rate_OECD)))
+```
 
-
+```{r mod, echo=TRUE}
 mod = lm( total_Compl ~Rate_OECD, data = eu_conf_corr)
 summary(mod)
 mod$coefficients
+```
 
+```{r confcorrplot, fig.cap="Trust towards the governments’handling of the pandemic"}
 ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) + 
   geom_point() +
   geom_label_repel(aes(label = Country),
@@ -648,17 +721,18 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
                    segment.color = 'grey50') +
   theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
-  ggtitle("Trust towards the governments’handling of the pandemic")+
   labs(y="Mean of Compliances", x="Mean of trust towards governemts efforts")+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
        axis.title.y =  element_text(margin = margin(r = 5)),
        axis.title.x =  element_text(margin = margin(t = 5)),
-       axis.text.y=element_text(size=10), plot.title = element_text(hjust = 0.5))+
+       axis.text.y=element_text(size=10))+
   geom_abline(intercept = mod$coefficients[1], 
               slope = mod$coefficients[2], 
               color = "red")
-
 ```
+From what emerges Poland not having confidence in the measures taken
+by governments does not even try to reduce transmission,
+while Denmark is in the opposite situation.
 In countries with higher trust towards governments ’efforts, citizens were also more 
 likely to report higher levels of compliance with directives aimed at controlling the 
 spread of the virus. Notably, Portugal reported higher levels of compliance than the model 
@@ -666,8 +740,8 @@ would predict based on the acceptance of government efforts. An outlier in the o
 direction, Latvia reported lower levels of compliance than those the model predicted, 
 given levels of trust.
 
-will be government’s effort to handle Coronavirus more trusted over the time?
-```{r}
+## Will be government’s effort to handle Coronavirus more trusted over the time?
+```{r trust2m, echo=TRUE}
 eu_trust2m <- select(filter(EU,RecordedDate=="2020-03-30"|
                        RecordedDate=="2020-04-06"|
                        RecordedDate=="2020-04-12"|
@@ -681,7 +755,9 @@ eu_trust2m <- select(filter(EU,RecordedDate=="2020-03-30"|
                        RecordedDate=="2020-05-30"),RecordedDate,OECD_insititutions_6) %>%
   ddply( .(RecordedDate), summarize,
          Rate_OECD=mean(OECD_insititutions_6,na.rm=TRUE))
+```
 
+```{r trust2mplot, fig.cap="Trust towards the governments’handling of the pandemic over the first weeks"}
 ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) + 
   geom_point(size=7) + 
   geom_segment(aes(x=RecordedDate, 
@@ -695,12 +771,11 @@ ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) +
   labs(y = "Mean of trust towards governemts efforts")+
   theme(axis.title.y = element_text(size = 10),axis.title.x=element_blank(),
         axis.text.x=element_text(size=10,vjust=0.5,hjust = 1.25),axis.ticks = element_blank(),
-        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25),
-        plot.title = element_text(hjust = 0.5))+
-  ggtitle("Trust towards the governments’handling of the pandemic")
+        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 
 ```
-in the first four weeks the trust for government’s effort to handle Coronavirus 
-appears to increase, to then decrease in the fifth week and remain stable in the following three,
-with the beginning of June and consequently of the summer season the population 
-does not seem to like the countermeasures taken by the governments to handle the pandemic
+In the first month the trust for government’s effort to handle Coronavirus 
+appears to increase, due to more stringent measures. But with beginning of the summer season Trust level seems to be decreasing,
+probably because in many countries, including ours, Italy, the measures were almost null.
+
+# Conclusions

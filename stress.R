@@ -288,6 +288,36 @@ ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) +
         plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5, size=15))+
   ggtitle("Levels of stress by Gender")
 ```
+#stress level based on employment
+```{r}
+eu_stress_empl <- select(EU, Dem_employment,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
+  ddply( .(Dem_employment), summarize,
+         Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
+         Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
+         Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
+         Rate_PSS10_UCLA4=mean(Scale_PSS10_UCLA_4,na.rm=TRUE),
+         Rate_PSS10_UCLA5=mean(Scale_PSS10_UCLA_5,na.rm=TRUE),
+         Rate_PSS10_UCLA6=mean(Scale_PSS10_UCLA_6,na.rm=TRUE),
+         Rate_PSS10_UCLA7=mean(Scale_PSS10_UCLA_7,na.rm=TRUE),
+         Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
+         Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
+         Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
+  mutate(total_stress = rowMeans(select(., -Dem_employment)))
+
+ggplot(data=subset(eu_stress_empl, !is.na(Dem_employment)),
+       aes(Dem_employment, total_stress)) + 
+  geom_point(size=7) + 
+  geom_segment(aes(x=Dem_employment, 
+                   xend=Dem_employment, 
+                   y=0, 
+                   yend=total_stress)) + 
+  ylim(0,4)+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
+        axis.text.x = element_text(angle=50, vjust=0.6, size = 10, margin = margin(t=15)), axis.line.y = element_line(size = 0.5),
+        axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 #How stress level changed in Europe during the first weeks of Covid pandemic?
 ```{r}
 eu_stress_2months <- select(filter(EU,RecordedDate=="2020-03-30"|
@@ -498,7 +528,28 @@ ggplot(eu_trust, aes(reorder(trust,mean), mean)) +
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
         axis.title.x =  element_text(margin = margin(t = 5)),
         axis.text.y=element_text(size=8), plot.title = element_text(margin=margin(0,0,5,0), hjust = 0.5))
+```
+## how much citizens trust their own governments?
+```{r}
+eu_mean_oecd1 <- select(EU,Country,OECD_insititutions_1) %>%
+  ddply( .(Country), summarize,
+         Rate_OECD_insititutions_1=mean(OECD_insititutions_1,na.rm=TRUE))%>%
+  arrange(desc( Rate_OECD_insititutions_1))
 
+ggplot(eu_mean_oecd1, aes(reorder(Country,Rate_OECD_insititutions_1),
+                          Rate_OECD_insititutions_1 )) +
+  geom_col(fill= "#006978")+
+  ylim(0,10)+
+  coord_flip()+
+  theme_economist(dkpanel=TRUE) +
+  scale_colour_economist()+
+  labs(y="Mean")+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+        axis.title.x =  element_text(margin = margin(t = 5)),
+        axis.text.y=element_text(size=10))
+```
+#trust of the countrymeasure
+```{r}
 eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
   ddply( .(Country), summarize,
          Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
