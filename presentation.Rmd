@@ -1,0 +1,845 @@
+---
+title: "Psychological impact <br> of Covid-19"
+author: "Andrea Turchet"
+output:
+  ioslides_presentation:
+    css: ./styles.css 
+    incremental: yes
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+
+
+
+```{r, include=FALSE}
+library(pacman)
+p_load(qualtRics, tidyverse,ggrepel,stringr, multicon, psych,ggthemes,
+       dplyr,plyr,modelr,plotly,sf,rworldmap,RColorBrewer,data.table,
+       rmdformats)
+```
+
+# Preamble
+
+
+```{r, out.width = "400px", out.height= "300px", fig.align='left', echo=FALSE}
+
+knitr::include_graphics("./img/covid.JPG")
+```
+
+#
+
+Analysis of the **psychological effects of Covid-19** in Europe during the first weeks of the pandemic. Survey based on this  [project](https://covidistress.github.io) conducted by researchers around the world.
+
+```{r, out.width = "200px", out.height= "300px", fig.align='right', echo=FALSE}
+
+knitr::include_graphics("./img/cov.png")
+```
+
+## Why this project?
+
+The project was chosen as it deals with analyzing all those factors that in this emergency situation can have **serious consequences** in people's lives, as the isolation, the economic situation and the stress due to the stringent measures to stop the pandemic are part of the side effects of covid-19.
+
+For more info check [this](https://www.nature.com/articles/s41597-020-00784-9) **Nature** article.
+```{r,include=FALSE}
+#load survey data
+d <- read_survey("csv-choice.csv")
+```
+
+
+```{r,include=FALSE}
+# filter out participants who did not provide their age here!
+d <- filter(d, Consent == "Yes") %>% 
+  filter(Dem_age >= 18)
+```
+
+```{r,include=FALSE}
+#The marital status variable was mixed up, with the exception of English. The variable was recoded to correct for that problem.
+# Load function 'recode_if'(Aden-Buie & Gerke, 2018)
+recode_if <- function(x, condition, ...) {
+  if_else(condition, recode(x, ...), x)
+}
+
+# Fix differences in scoring between English and other languages 
+d <- d %>%
+  mutate(Dem_maritalstatus = 
+           recode_if(Dem_maritalstatus, UserLanguage != "EN", 
+                     "Single" = "Other or would rather not say",
+                     "Married/cohabiting" = "Single",
+                     "Divorced/widowed"= "Married/cohabiting",
+                     "Other or would rather not say" = "Divorced/widowed"))
+
+```
+
+```{r,include=FALSE}
+
+#Remove dashes in front of the response options
+d$Dem_edu <- str_remove(d$Dem_edu, "- ")
+d$Dem_edu_mom <- str_remove(d$Dem_edu_mom, "- ")
+```
+
+```{r,include=FALSE}
+#There were some participants who had “1” in Dem_edu. These responses were recoded as “Uninformative response”
+#Recode 1 as Uninformative responses
+d$Dem_edu <- str_replace(d$Dem_edu, "^1", "Uninformative response")
+d$Dem_edu_mom <- str_replace(d$Dem_edu_mom, "^1", "Uninformative response")
+```
+
+
+```{r,include=FALSE}
+#The variable Dem_gender in Spain & Mexico was inverted – Male was recorded as Female and vice versa. Thus, the variable was recoded for SSP (Espanol - Espana) and SME (Espanol - Mexico)
+d <- d %>% 
+  mutate(Dem_gender = ifelse(UserLanguage %in% c("SSP", "SME"),
+                             case_when(Dem_gender == "Female" ~ "Male",
+                                       Dem_gender == "Male" ~ "Female",
+                                       Dem_gender == "Other/would rather not say" ~ "Other/would rather not say"),
+                             Dem_gender))
+```
+
+
+```{r,include=FALSE}
+#Recode AD_Check, AD_gain and AD_loss (shorten the response and turn the character to factor)
+d <- d %>% 
+  mutate(AD_gain = factor(recode(AD_gain, 
+                                 "· If Program A is adopted, 200 people will be saved." = "Program A",
+                                 "· If Program B is adopted, there is 1/3 probability that 600 people will be saved, and 2/3 probability that no people will be saved" = "Program B")),
+         AD_loss = factor(recode(AD_loss, 
+                                 "· If Program C is adopted 400 people will die." = "Program C",
+                                 "· If Program D is adopted there is 1/3 probability that nobody will die, and 2/3 probability that 600 people will die." = "Program D")),
+         AD_check = factor(AD_check))
+```
+
+
+```{r,include=FALSE}
+#Convert scale responses to numeric
+#PSS10
+d <- d %>% mutate_at(
+  .vars = vars(contains("PSS10")),
+  .funs = recode, 
+  "Never" = 1, 
+  "Almost never" = 2,
+  "Sometimes" = 3, 
+  "Fairly often" = 4,
+  "Very often" = 5
+)
+```
+
+```{r,include=FALSE}
+#Corona_concerns, Compliance, BFF, SPS, Coping, Expl_media
+d <- d %>% mutate_at(
+  .vars = vars(matches("Corona_concerns|Compliance|BFF|SPS|Coping_\\d|Expl_media")),
+  .funs = recode, 
+  "Strongly disagree" = 1, 
+  "Disagree" = 2,
+  "Slightly disagree" = 3, 
+  "Slightly agree" = 4,
+  "Agree" = 5,
+  "Strongly agree" = 6
+)
+```
+
+```{r,include=FALSE}
+#Distress scale
+#note: 99 is “Does not apply to my current situation”
+d <- d %>% mutate_at(
+  .vars = vars(matches("Distress_\\d")),
+  .funs = recode, 
+  "Strongly disagree" = 1, 
+  "Disagree" = 2,
+  "Slightly disagree" = 3, 
+  "Slightly agree" = 4,
+  "Agree" = 5,
+  "Strongly agree" = 6,
+  "Does not apply to my current situation" = 99
+)
+```
+
+
+```{r,include=FALSE}
+#Trust in the country’s measures
+#Take care that this scale is coded in such a way that both 0 and 10 are defined as “not appropriate” (either too little or too much) and 5 is defined as appropriate.
+# Recoding Trust_country measure
+d <- d %>% mutate(
+  Trust_countrymeasure = recode(Trust_countrymeasure,
+                                "Too little" = 0,
+                                "1" = 1,
+                                "2" = 2,
+                                "3" = 3,
+                                "4" = 4,
+                                "Appropriate" = 5,
+                                "6" = 6,
+                                "7" = 7,
+                                "8" = 8,
+                                "9" = 9,
+                                "Too much" = 10))
+```
+
+```{r,include=FALSE}
+#Rename the PSS10_11 through PSS10_13 to Perceived loneliness (SLON-3)
+#PSS10_11 to PSS10_13 are actually the Perceived loneliness items
+d <- d %>% 
+  rename("Scale_SLON_1" = Scale_PSS10_UCLA_11,
+         "Scale_SLON_2" = Scale_PSS10_UCLA_12,
+         "Scale_SLON_3" = Scale_PSS10_UCLA_13) 
+```
+
+```{r,include=FALSE}
+#cleaned dataset (beta)
+cleaned_d <- d[, c(5, 7, 10, 12:151)]
+```
+
+
+# Characteristics <br> of <br> Respondents
+#
+
+```{r EU, include=FALSE}
+#filtering by EU Countries
+target <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic",
+            "Denmark","Estonia","Finland","France","Germany","Greece","Hungary",
+            "Ireland","Italy","Latvia","Lithuania","Luxembourg","Malta",
+            "Netherlands","Poland","Portugal","Romania","Slovakia","Slovenia",
+            "Spain","Sweden")
+
+EU <- filter(cleaned_d, Country %in% target) 
+
+#fixing date visualization
+EU$RecordedDate <- as.Date(EU$RecordedDate , format= "%Y-%m-%d")
+```
+
+
+Most respondents are aged **between 20 and 40**.
+
+```{r age, fig.width=6,fig.height=4,echo=FALSE,fig.align='center'}
+#note: Missing values are omitted
+ggplot(subset(EU, !is.na(Dem_age)),aes(Dem_age))+
+  geom_bar(fill= "#422040")+
+  theme_wsj() +
+  labs(x = "Age")+
+  xlim(18,99)+
+  theme(axis.title.y=element_blank(),axis.title.x = element_text(margin = margin(t=5),size = 15),
+        axis.text.y = element_text(size=10, hjust = 1))
+```
+
+
+#
+
+```{r empl,echo=FALSE}
+#Missing values are omitted
+empl <-count(EU$Dem_employment)
+empl =empl[-7, ] 
+```
+
+**Full time employed** lead the survey.
+
+```{r emplplot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
+plot_ly(empl, labels = ~x, values = ~freq, type = 'pie') %>%
+  layout(xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+```
+
+#
+
+
+```{r gendeer,echo=FALSE,fig.align='center'}
+#note: Missing values are omitted
+gnd <-count(EU$Dem_gender)
+ gnd = gnd[-4, ] 
+```
+
+The majority of the answers come from **women**.
+
+```{r gendeerplot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
+ plot_ly(gnd, labels = ~x, values = ~freq, type = 'pie') %>%
+   layout(xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+          yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+```
+
+# Stress level in Europe
+#
+
+
+
+Based on the analysis of **perceived individual stress**, obtained through the PSS Scale,  invented by psychologists Cohen, Karmak, and Mermelstrein (1983), using indicators of stress responses, for instance, perceived lack of control over events, pressure from mounting difficulties and feeling upset about unexpected changes. Scores are considered moderate above 2.4, and high above 3.7.
+More infos about **PSS Scale** [here.](https://www.midss.org/content/perceived-stress-scale-pss)
+
+
+
+```{r, out.width = "120px", out.height= "120px", fig.align='right', echo=FALSE}
+
+knitr::include_graphics("./img/stressman.png")
+
+```
+
+#
+
+```{r stress, echo=TRUE,include=FALSE}
+#note that the na values are omitted
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 1] <- 5
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 2] <- 4
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 4] <- 2
+EU$Scale_PSS10_UCLA_4[EU$Scale_PSS10_UCLA_4 == 5] <- 1
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 1] <- 5
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 2] <- 4
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 4] <- 2
+EU$Scale_PSS10_UCLA_5[EU$Scale_PSS10_UCLA_5 == 5] <- 1
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 1] <- 5
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 2] <- 4
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 4] <- 2
+EU$Scale_PSS10_UCLA_7[EU$Scale_PSS10_UCLA_7 == 5] <- 1
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 1] <- 5
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 2] <- 4
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 4] <- 2
+EU$Scale_PSS10_UCLA_8[EU$Scale_PSS10_UCLA_8 == 5] <- 1
+
+eu_stress <- select(EU,Country, Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
+  ddply( .(Country), summarize,
+         Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
+         Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
+         Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
+         Rate_PSS10_UCLA4=mean(Scale_PSS10_UCLA_4,na.rm=TRUE),
+         Rate_PSS10_UCLA5=mean(Scale_PSS10_UCLA_5,na.rm=TRUE),
+         Rate_PSS10_UCLA6=mean(Scale_PSS10_UCLA_6,na.rm=TRUE),
+         Rate_PSS10_UCLA7=mean(Scale_PSS10_UCLA_7,na.rm=TRUE),
+         Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
+         Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
+         Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
+  mutate(total_stress = rowMeans(select(., -Country)))
+```
+
+Levels of stress were **moderate or lower** in many countries. Poland and Portugal reported the highest levels of stress in Europe,and Denmark and the Netherlands the lowest.
+
+```{r eustressplot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
+ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
+  geom_col(fill= "#422040")+
+  ylim(0,5)+
+  coord_flip()+
+  theme_wsj() +
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y=element_blank(),
+        axis.text.x = element_text( size = 8), axis.line.y = element_line(size = 0.5),
+        axis.text.y = element_text(size=10, hjust = 1))
+
+```
+
+
+## Stress by gender
+```{r genderstress, echo=TRUE,include=FALSE,fig.width=6,fig.height=4,fig.align='center'}
+eu_stress_gender <- select(filter(EU,Dem_gender=="Male" | Dem_gender=="Female"), Dem_gender,
+                           Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
+  ddply( .(Dem_gender), summarize,
+         Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
+         Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
+         Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
+         Rate_PSS10_UCLA4=mean(Scale_PSS10_UCLA_4,na.rm=TRUE),
+         Rate_PSS10_UCLA5=mean(Scale_PSS10_UCLA_5,na.rm=TRUE),
+         Rate_PSS10_UCLA6=mean(Scale_PSS10_UCLA_6,na.rm=TRUE),
+         Rate_PSS10_UCLA7=mean(Scale_PSS10_UCLA_7,na.rm=TRUE),
+         Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
+         Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
+         Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
+  mutate(total_stress = rowMeans(select(., -Dem_gender)))
+```
+
+**Women** results more stressed then men, as said in [this](https://psycnet.apa.org/record/1999-10525-006)
+Psychological article.
+
+```{r genderstressplot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
+ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) + 
+  geom_point(size=7) + 
+  geom_segment(aes(x=Dem_gender, 
+                   xend=Dem_gender, 
+                   y=0, 
+                   yend=total_stress)) + 
+  ylim(0,4)+
+  theme_wsj() +
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
+        axis.text.x = element_text(angle=65, vjust=0.6, size = 10), axis.line.y = element_line(size = 0.5),
+        axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
+```
+
+## Stress by employment
+```{r stress employment, echo=TRUE,include=FALSE}
+eu_stress_empl <- select(EU, Dem_employment,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
+  ddply( .(Dem_employment), summarize,
+         Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
+         Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
+         Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
+         Rate_PSS10_UCLA4=mean(Scale_PSS10_UCLA_4,na.rm=TRUE),
+         Rate_PSS10_UCLA5=mean(Scale_PSS10_UCLA_5,na.rm=TRUE),
+         Rate_PSS10_UCLA6=mean(Scale_PSS10_UCLA_6,na.rm=TRUE),
+         Rate_PSS10_UCLA7=mean(Scale_PSS10_UCLA_7,na.rm=TRUE),
+         Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
+         Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
+         Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
+  mutate(total_stress = rowMeans(select(., -Dem_employment)))
+```
+
+**Student** is the most stressed category, as expected due to isolation and social distancing;
+Poland is the most stressed Nation and in fact in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
+article we can see that Polish University Students recorded an highly level of stress during the Covid-19 pandemic.
+
+```{r stress employment plot,echo=FALSE,fig.width=6,fig.height=3,fig.align='center'}
+ggplot(data=subset(eu_stress_empl, !is.na(Dem_employment)),
+       aes(Dem_employment, total_stress)) + 
+  geom_point(size=7) + 
+  geom_segment(aes(x=Dem_employment, 
+                   xend=Dem_employment, 
+                   y=0, 
+                   yend=total_stress)) + 
+  ylim(0,4)+
+  theme_wsj() +
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y = element_text(margin=margin(r=3), hjust = 0.5, size=10),axis.title.x=element_blank(),
+        axis.text.x = element_text(angle=50, vjust=0.6, size = 8, margin = margin(t=15)), axis.line.y = element_line(size = 0.5),
+        axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
+```
+
+
+## How stress level changed <br> in Europe during the <br> first weeks of Covid <br> pandemic?
+#
+```{r stressduringtime, echo=TRUE,include=FALSE}
+eu_stress_2months <- select(filter(EU,RecordedDate=="2020-03-30"|
+                                     RecordedDate=="2020-04-06"|
+                                     RecordedDate=="2020-04-12"|
+                                     RecordedDate=="2020-04-18"|
+                                     RecordedDate=="2020-04-24"|
+                                     RecordedDate=="2020-04-30"|
+                                     RecordedDate=="2020-05-05"|
+                                     RecordedDate=="2020-05-11"|
+                                     RecordedDate=="2020-05-17"|
+                                     RecordedDate=="2020-05-23"|
+                                     RecordedDate=="2020-05-30"), 
+                            RecordedDate,Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
+  ddply( .(RecordedDate), summarize,
+         Rate_PSS10_UCLA1=mean(Scale_PSS10_UCLA_1,na.rm=TRUE),
+         Rate_PSS10_UCLA2=mean(Scale_PSS10_UCLA_2,na.rm=TRUE),
+         Rate_PSS10_UCLA3=mean(Scale_PSS10_UCLA_3,na.rm=TRUE),
+         Rate_PSS10_UCLA4=mean(Scale_PSS10_UCLA_4,na.rm=TRUE),
+         Rate_PSS10_UCLA5=mean(Scale_PSS10_UCLA_5,na.rm=TRUE),
+         Rate_PSS10_UCLA6=mean(Scale_PSS10_UCLA_6,na.rm=TRUE),
+         Rate_PSS10_UCLA7=mean(Scale_PSS10_UCLA_7,na.rm=TRUE),
+         Rate_PSS10_UCLA8=mean(Scale_PSS10_UCLA_8,na.rm=TRUE),
+         Rate_PSS10_UCLA9=mean(Scale_PSS10_UCLA_9,na.rm=TRUE),
+         Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
+  mutate(total_stress = rowMeans(select(., -RecordedDate)))
+```
+
+```{r pred, echo=TRUE,include=FALSE}
+mod = lm( total_stress ~RecordedDate, data = eu_stress_2months)
+summary(mod)
+mod$coefficients
+```
+Stress level is **in line** with the model predictions, with few exceptions.
+Unexpectedly in the end of the May the stress level increased again, it is weird because typically with the beginning of summer people should
+be less stressed; unfortunately we don't have any data that will confirm this trend.
+
+```{r plotstressovertime,echo=FALSE,fig.width=6,fig.height=3,fig.align='center'}
+ggplot(eu_stress_2months, aes(RecordedDate, total_stress)) + 
+  geom_point(size=7) + 
+  geom_segment(aes(x=RecordedDate, 
+                   xend=RecordedDate, 
+                   y=0, 
+                   yend=total_stress)) + 
+  geom_abline(intercept = mod$coefficients[1], 
+              slope = mod$coefficients[2], 
+              color = "red")+
+  ylim(0,3)+
+  scale_x_date(date_breaks = "1 months", date_labels = "%B") +
+  theme_wsj() +
+  labs(y = "Mean of stress levels")+
+  theme(axis.title.y = element_text(margin=margin(r=5), hjust = 0.5, size=10),axis.title.x=element_blank(),
+        axis.text.x=element_text(size=10,vjust=0.5,hjust = 1.25),axis.ticks = element_blank(),
+        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
+
+```
+
+# Geographical Stress Map
+
+## Detailed map of stress level <br> in Europe
+```{r mapping,include=FALSE}
+worldMap <- getMap()
+## identify EU countries
+show <- which(worldMap$NAME %in% eu_stress$Country)
+
+## WORLD coordinates
+## this will be used as the background and will include non EU countries
+plotCoords <-
+  lapply(seq(worldMap$NAME),
+         function(x) {
+           ## collect long/lat in dataframe
+           df <- lapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) x@coords)
+           df <- do.call("rbind", as.list(df))
+           df <- data.frame(df)
+           
+           ## add geographical name
+           df$region <- as.character(worldMap$NAME[x])
+           if (is.na(worldMap$NAME[x])) df$region <- "NONAME"
+           
+           ## add unique polygon identifier
+           id <-
+             rep(seq_along(worldMap@polygons[[x]]@Polygons),
+                 sapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) nrow(x@coords)))
+           df$group <- paste0(df$region, id)
+           
+           ## add column names and return dataframe
+           colnames(df) <- list("long", "lat", "region", "group")
+           return(df)
+         })
+plotCoords <- do.call("rbind", plotCoords)
+
+## add EU identifier
+plotCoords$EU <- 0
+plotCoords$EU[which(plotCoords$region %in% eu_stress$Country)] <- 1
+
+## for some reason, this group gives a horizontal segment across Europe
+plotCoords <- plotCoords[plotCoords$group != "United States4", ]
+
+## EU coordinates
+showCoords <-
+  lapply(show,
+         function(x) {
+           ## collect long/lat in dataframe
+           df <- lapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) x@coords)
+           df <- do.call("rbind", as.list(df))
+           df <- data.frame(df)
+           
+           ## add geographical name
+           df$region <- as.character(worldMap$NAME[x])
+           if (is.na(worldMap$NAME[x])) df$region <- "NONAME"
+           
+           ## add unique polygon identifier
+           id <-
+             rep(seq_along(worldMap@polygons[[x]]@Polygons),
+                 sapply(worldMap@polygons[[x]]@Polygons,
+                        function(x) nrow(x@coords)))
+           df$group <- paste0(df$region, id)
+           
+           ## add column names and return dataframe
+           colnames(df) <- list("long", "lat", "region", "group")
+           return(df)
+         })
+showCoords <- do.call("rbind", showCoords)
+
+## add total stress level category
+showCoords$total_stress<-
+  eu_stress$total_stress[match(showCoords$region, eu_stress$Country)]
+showCoords$total_stress <-as.numeric(showCoords$total_stress, unique(showCoords$total_stress))
+```
+```{r map, fig.align='center',fig.width=8,fig.height=4,echo=FALSE}
+ggplot() +
+  geom_polygon(
+    data = plotCoords,
+    aes(x = long, y = lat, group = group),
+    fill = "lightgrey", colour = "darkgrey", size = 0.1) +
+  geom_polygon(
+    data = showCoords,
+    aes(x = long, y = lat, group = group, fill = total_stress),
+    colour = "black", size = 0.1) +
+  scale_fill_continuous(high = "#1e001a", low = "#6e496b", name="Mean of stress levels")+
+  scale_x_continuous(element_blank(), breaks = NULL) +
+  scale_y_continuous(element_blank(), breaks = NULL) +
+  coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73))
+```
+
+# Sources of Distress 
+#
+
+The **cause** of the stress of the respondents, asking them questions regarding various factors that represent a source of stress.
+ 
+```{r, out.width = "200px", out.height= "200px", fig.align='right', echo=FALSE}
+
+knitr::include_graphics("./img/stressed.png")
+
+```
+
+
+```{r stress source, echo=TRUE,include=FALSE}
+eu_stress_source <- select(EU, Expl_Distress_1:Expl_Distress_24)%>%
+                    na.omit()
+
+eu_stress_source = data.frame(apply(eu_stress_source,2,function(x)mean(x[x<99]))) %>%
+  tibble::rownames_to_column(var = "col1") %>%
+  `colnames<-`(c("stress_source", "mean")) 
+ 
+listlab<-(c("No religious activities", "Not knowing how to stop covid-19",
+            "Feeling ashamed for acting differently","Adapt work to Digital Platforms",
+            "Access to necessities(food etc..)","Behavior of adults I live with",
+            "Behavior of childrens I live with","Adapt to social life on digital platforms",
+            "No trovels outside my Country","Loneliness","Time i spend in proximity to others",
+            "Children's education","Civil services(Police,sanitations..)","Income",
+            "Not knowing about developments with Covid-19","Time I spend inside","Work",
+            "Job prospect","No social activities","Worry over friends and relatives who live far away",
+            "Not knowing how long the measures will last","Risk of catching covid-19",
+            "Risk of being hospedalized or dying","National economy"))
+```
+#
+
+The results indicate that most respondents are concerned about the state of the **national economy**. 
+
+```{r stress source plot,fig.width=6,fig.height=4,echo=FALSE,fig.align='center'}
+ggplot(eu_stress_source, aes(reorder(stress_source,mean), mean)) +
+  geom_col(fill= "#422040")+
+  ylim(0,6)+
+  coord_flip()+
+  theme_wsj() +
+  scale_x_discrete(label  = listlab)+
+  labs(y="Mean" )+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+        axis.title.x =  element_text(margin = margin(t = 5),hjust = 0.53,,size = 15),
+        axis.text.y=element_text(size=8))
+```
+
+
+
+# Trust in institutions
+#
+Partecipants were asked how much they trusted six key **institutions** in relation to the Covid-19 emergency.
+
+
+[Here](https://www.oecd.org/governance/oecd-guidelines-on-measuring-trust-9789264278219-en.htm) there are **OECD guidelines** on measuring institutions trust.
+
+```{r, out.width = "150px", out.height= "150px", fig.align='right', echo=FALSE}
+
+knitr::include_graphics("./img/trust.png")
+
+```
+
+#
+
+```{r trust, echo=TRUE,include=FALSE}
+eu_trust <- select(EU, OECD_insititutions_1:OECD_insititutions_6)%>%
+  na.omit()
+
+eu_trust = data.frame(apply(eu_trust,2,function(x)mean(x))) %>%
+  tibble::rownames_to_column(var = "col1") %>%
+  `colnames<-`(c("trust", "mean")) 
+lablist<-(c("Country's Governments","Country's civil Service","Country's Police",
+            "Governments effort against covid-19","WHO","Country's Healthcare system"))
+```
+
+Europeans reported only **medium** level of trust at all, with the highest levels of trust for their countries’ healthcare system and the WHO.
+Notably, Countries governments reported the lowest level of trust.
+
+```{r trustplot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
+ggplot(eu_trust, aes(reorder(trust,mean), mean)) +
+  geom_col(fill= "#422040")+
+  ylim(0,10)+
+  coord_flip()+
+  theme_wsj() +
+ scale_x_discrete(label  = lablist)+
+  labs(y="Mean" )+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+        axis.title.x =  element_text(margin = margin(t = 5),size = 15),
+        axis.text.y=element_text(size=8))
+```
+
+## How much citizens <br> trust their own <br> governments?
+```{r trustoecd1, echo="TRUE",include=FALSE}
+
+eu_mean_oecd1 <- select(EU,Country,OECD_insititutions_1) %>%
+  ddply( .(Country), summarize,
+         Rate_OECD_insititutions_1=mean(OECD_insititutions_1,na.rm=TRUE))%>%
+        arrange(desc( Rate_OECD_insititutions_1))
+```
+
+#
+**Poland** is the most stressed Nation but also 
+one of the Country in which the population trust least in their own government.
+**Finland**, on the other hand, is the nation with the least stress related to Covid,
+and it is also one of the Nations in which the population trust
+most in their own government.
+
+
+```{r trustoecd1plot,echo=FALSE,fig.width=6,fig.height=3.2,fig.align='center'}
+ggplot(eu_mean_oecd1, aes(reorder(Country,Rate_OECD_insititutions_1),
+                          Rate_OECD_insititutions_1 )) +
+  geom_col(fill= "#422040")+
+  ylim(0,10)+
+  coord_flip()+
+  theme_wsj() +
+  labs(y="Mean")+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+        axis.title.x =  element_text(margin = margin(t = 5),size = 15),
+        axis.text.y=element_text(size=7))
+```
+
+
+## How much citizens trust <br> the government’s effort <br> to handle the <br> pandemic?
+
+#
+ 
+Similar patterns as the trust level in the governments, with **Bulgaria** that reported the lowest level of 
+trust for the national effort to handle the pandemic.
+ 
+ ```{r trustoecd4, echo="TRUE",include=FALSE}
+ 
+ eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
+   ddply( .(Country), summarize,
+          Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
+   arrange(desc( Rate_OECD_insititutions_4))
+ ```
+ 
+ ```{r trustoecd4plot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
+ ggplot(eu_mean_oecd4, aes(reorder(Country,Rate_OECD_insititutions_4),
+                           Rate_OECD_insititutions_4 )) +
+   geom_col(fill= "#422040")+
+   ylim(0,10)+
+   coord_flip()+
+   theme_wsj() +
+   labs(y="Mean")+
+   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
+         axis.title.x =  element_text(margin = margin(t = 5),size = 15),
+         axis.text.y=element_text(size=8))
+ ```
+ 
+# Trust in <br> Countries' <br> Measure
+
+#
+
+It was also asked participants to judge the **appropriateness
+of the countries’ measures** in response to the COVID-19 on a scale from 0 (too little),
+to 5 (appropriate, the black dashed line in the graph), to 10 (too much).
+
+#
+
+```{r trustinc, echo=TRUE,include=FALSE}
+eu_trustinc <- select(EU,Country,Trust_countrymeasure) %>%
+  group_by(Country) %>%
+  dplyr::summarize(Mean = mean(Trust_countrymeasure, na.rm=TRUE))
+```
+
+**Slovakia** and **Slovenia** were those countries where citizens considered the measures stronger than necessary; in the plot, the vertical mid-line indicates that the measures are appropriate.
+**France** and **Hungary** citizens judged their governments’response less than appropriate.
+
+
+```{r trustincplot, fig.width=6,fig.height=3.5,echo=FALSE,fig.align='center'}
+ggplot(eu_trustinc, aes(reorder(Country, Mean), Mean)) +
+  geom_col(fill="#422040")+
+  ylim(0,8)+
+  geom_hline(yintercept=5)+
+  coord_flip()+
+  theme_wsj() +
+  labs(y="Country", x="Mean")+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
+        axis.title.y =  element_text(margin = margin(r = 5),size = 15),
+        axis.title.x =  element_text(margin = margin(t = 5),size = 15),
+        axis.text.y=element_text(size=7.7))
+        
+```
+
+
+## Is there correlation between confidence in the measures taken by governments to tackle covid and the actions that the population has taken to reduce transmission?
+
+#
+
+```{r confcorr, echo=TRUE,include=FALSE}
+eu_conf_corr <- select(EU,Country,OECD_insititutions_6,Compliance_1:Compliance_6) %>%
+                ddply( .(Country), summarize,
+         Rate_OECD=mean(OECD_insititutions_6,na.rm=TRUE),
+         Rate_Compliance_1=mean(Compliance_1,na.rm=TRUE),
+         Rate_Compliance_2=mean(Compliance_2,na.rm=TRUE),
+         Rate_Compliance_3=mean(Compliance_3,na.rm=TRUE),
+         Rate_Compliance_4=mean(Compliance_4,na.rm=TRUE),
+         Rate_Compliance_5=mean(Compliance_5,na.rm=TRUE))%>%
+  mutate(total_Compl = rowMeans(select(., -Country,-Rate_OECD)))
+```
+
+```{r mod, echo=TRUE,include=FALSE}
+mod = lm( total_Compl ~Rate_OECD, data = eu_conf_corr)
+summary(mod)
+mod$coefficients
+```
+
+**Poland** not having confidence in the measures taken by governments and does not even try to reduce transmission,
+while **Denmark** is in the opposite situation.
+In countries with higher trust towards governments ’efforts, citizens were also more 
+likely to report higher levels of compliance with directives aimed at controlling the 
+spread of the virus.
+
+```{r confcorrplot,echo=FALSE,fig.width=6,fig.height=3.4,fig.align='center'}
+ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) + 
+  geom_point() +
+  geom_label_repel(aes(label = Country),
+                   size=2,
+                   box.padding   = unit(0.5, "lines"), 
+                   point.padding = 0.5,
+                   min.segment.length = 0,
+                   segment.color = 'grey50') +
+  theme_wsj() +
+  labs(y="Mean of Compliances", x="Mean of trust towards governemts efforts")+
+  theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
+       axis.title.y =  element_text(margin = margin(r = 5),size = 15),
+       axis.title.x =  element_text(margin = margin(t = 5),size = 15),
+       axis.text.y=element_text(size=10))+
+  geom_abline(intercept = mod$coefficients[1], 
+              slope = mod$coefficients[2], 
+              color = "red")
+```
+
+#
+Notably, **Portugal** reported higher levels of compliance than the model  would predict based on the acceptance of government efforts. An outlier in the other direction, **Latvia** reported lower levels of compliance than those the model predicted, given levels of trust.
+
+
+## Will be the government’s <br>effort to handle Coronavirus <br> more trusted <br>  over the time?
+
+```{r trust2m, echo=TRUE,include=FALSE}
+eu_trust2m <- select(filter(EU,RecordedDate=="2020-03-30"|
+                       RecordedDate=="2020-04-06"|
+                       RecordedDate=="2020-04-12"|
+                       RecordedDate=="2020-04-18"|
+                       RecordedDate=="2020-04-24"|
+                       RecordedDate=="2020-04-30"|
+                       RecordedDate=="2020-05-05"|
+                       RecordedDate=="2020-05-11"|
+                       RecordedDate=="2020-05-17"|
+                       RecordedDate=="2020-05-23"|
+                       RecordedDate=="2020-05-30"),RecordedDate,OECD_insititutions_6) %>%
+  ddply( .(RecordedDate), summarize,
+         Rate_OECD=mean(OECD_insititutions_6,na.rm=TRUE))
+```
+
+#
+In the first month the trust for government’s effort to handle Coronavirus 
+appears to increase, due to more stringent measures. But with **beginning of the summer season** Trust level seems to be decreasing,
+probably because in many countries, including ours, Italy, the measures were almost null.
+
+```{r trust2mplot,echo=FALSE,fig.width=6,fig.height=3.5,fig.align='center'}
+ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) + 
+  geom_point(size=7) + 
+  geom_segment(aes(x=RecordedDate, 
+                   xend=RecordedDate, 
+                   y=0, 
+                   yend=Rate_OECD)) + 
+  ylim(0,10)+
+  scale_x_date(date_breaks = "1 months", date_labels = "%B") +
+  theme_wsj() +
+  labs(y = "Mean of trust towards governemts efforts")+
+  theme(axis.title.y = element_text(size = 8),axis.title.x=element_blank(),
+        axis.text.x=element_text(size=10,vjust=0.5,hjust = 1.25),axis.ticks = element_blank(),
+        axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
+
+```
+
+# Conclusions
+#
+
+- Poland citizens have the highest level of stress
+- Student is the most stressed category
+- Women results more frustrated then men
+- European Citizens are scared about National economy
+- Country's Healthcare system is trusted 
+
+
+#
+In conclusion, Northern Eu's Countries result less stressed and trust more in their authority rules to block the pandemic ,on the other side 
+est-european countries are most stressed and trust less in their governments and in measure taken to handle the pandemic
+
