@@ -196,10 +196,9 @@ d <- d %>%
 cleaned_d <- d[, c(5, 7, 10, 12:151)]
 ```
 
+# Characteristics of the Respondents
 
-# Main analysis
-
- As said in the **'Preamble'** this project is focuses on the responses provided by citizens located in Europe's countries.
+As said in the **'Preamble'** this project is focuses on the responses provided by citizens located in Europe's countries.
 ```{r EU, echo=TRUE}
 #filtering by EU Countries
 target <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus","Czech Republic",
@@ -213,7 +212,6 @@ EU <- filter(cleaned_d, Country %in% target)
 #fixing date visualization
 EU$RecordedDate <- as.Date(EU$RecordedDate , format= "%Y-%m-%d")
 ```
-### Characteristics of the Respondents
 
 We can see that most respondents are aged **between 20 and 40**.
 ```{r age, fig.cap="Age of the Respondents", fig.align='center'}
@@ -227,7 +225,6 @@ ggplot(subset(EU, !is.na(Dem_age)),aes(Dem_age))+
   theme(axis.title.y=element_blank(),axis.title.x = element_text(margin = margin(t=5)),
         axis.text.y = element_text(size=10, hjust = 1))
 ```
-
 
 The majority of the answers come from **women**.
 ```{r gendeer, fig.cap="Gender of the Respondents", fig.align='center'}
@@ -308,7 +305,7 @@ ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
         axis.text.y = element_text(size=10, hjust = 1))
 
 ```
-Levels of stress were **moderate or lower** in many countries. Poland and Portugal reported the highest levels of stress in Europe,and Denmark and the Netherlands the lowest.
+Levels of stress were **moderate or lower** in many countries. Poland and Croatia reported the highest levels of stress in Europe,and Denmark and the Netherlands the lowest.
 
 ## Are men or women more stressed?
 ```{r genderstress, echo=TRUE}
@@ -343,7 +340,7 @@ ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) +
         axis.text.x = element_text(angle=65, vjust=0.6, size = 10), axis.line.y = element_line(size = 0.5),
         axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 ```
-In fact we can see that **women** results more stressed then men, as said in [this](https://psycnet.apa.org/record/1999-10525-006)
+In fact we can see that **women** results more stressed then men, in line with [this](https://psycnet.apa.org/record/1999-10525-006)
 Psychological article, many women also have to think about the housework and the children.
 
 ## Which is the most stressed employment?
@@ -379,7 +376,7 @@ ggplot(data=subset(eu_stress_empl, !is.na(Dem_employment)),
         axis.text.x = element_text(angle=50, vjust=0.6, size = 10, margin = margin(t=15)), axis.line.y = element_line(size = 0.5),
         axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 ```
-**Student** is the most stressed category, as expected due to isolation and social distancing;
+**Student** is the most stressed category, as expected, due to isolation and social distancing;
 Poland is the most stressed Nation and in fact in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
 article we can see that University Students recorded an highly level of stress during the Covid-19 pandemic.
 
@@ -786,8 +783,8 @@ article we can see that Polish University Students recorded an highly level of s
 **Women** results more stressed then men, as said in [this](https://psycnet.apa.org/record/1999-10525-006)
 Psychological article.
 Notably, around the Europe the **Country's healthcare system** is trusted followed by the **WHO**. 
-Northern Eu's Countries result **less stressed** and trust more in their authority rules to block the pandemic ,on the other side 
-Est-European countries are **most stressed** and trust less in their governments and in measure taken to handle the pandemic
+The countries of northern Europe result **less stressed** and trust more in their authority rules to block the pandemic ,on the other side 
+est-European countries are **most stressed** and trust less in their governments and in measure taken to handle the pandemic
 
 # Presentation
 Click [**Here**]( ./presentation.html ) to start.

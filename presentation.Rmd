@@ -311,7 +311,7 @@ eu_stress <- select(EU,Country, Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
   mutate(total_stress = rowMeans(select(., -Country)))
 ```
 
-Levels of stress were **moderate or lower** in many countries. Poland and Portugal reported the highest levels of stress in Europe,and Denmark and the Netherlands the lowest.
+Levels of stress were **moderate or lower** in many countries. Poland and Croatia reported the highest levels of stress in Europe,and Denmark and the Netherlands the lowest.
 
 ```{r eustressplot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
 ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
@@ -840,6 +840,5 @@ ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) +
 
 
 #
-In conclusion, Northern Eu's Countries result less stressed and trust more in their authority rules to block the pandemic ,on the other side 
-est-european countries are most stressed and trust less in their governments and in measure taken to handle the pandemic
+In conclusion, the countries of northern Europe result less stressed and trust more in their authority rules to block the pandemic ,on the other side est-european countries are most stressed and trust less in their governments and in measure taken to handle the pandemic
 

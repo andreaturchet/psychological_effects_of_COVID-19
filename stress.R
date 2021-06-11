@@ -689,3 +689,5 @@ ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) +
 #appears to increase, to then decrease in the fifth week and remain stable in the following three,
 #with the beginning of June and consequently of the summer season the population 
 #does not seem to like the countermeasures taken by the governments to handle the pandemic
+
+#####OBSOLETE, CHECK STRESS.RMD########
