@@ -1,5 +1,5 @@
 ---
-title: "Psychological effects of Covid-19"
+title: "Psychological impact of Covid-19"
 output:
   rmdformats::material:
     highlight: tango
@@ -39,16 +39,16 @@ p_load(qualtRics, tidyverse,ggrepel,stringr, multicon, psych,ggthemes,
 
 ![](./img/covid.JPG)
 
-Analysis of the **psychological effects of Covid-19** in Europe during the first weeks of the pandemic. Survey based on this  [project](https://covidistress.github.io) conducted by researchers around the world. Trying to map out all the factors, that might affects people’s psychological wellbeing and their ability to make good decisions during the COVID-19 (or "Coronavirus") outbreak all over the world. Researchers form many countries are collaborating on this project, to help scientists and decision makers to help and communicate.
+Analysis of the **psychological effects of Covid-19** in Europe during the first weeks of the pandemic.The survey on which this study is based was conducted by international researchers around the world, trying to map out all the factors, that might affects people’s psychological wellbeing and their ability to make good decisions during the COVID-19 (or "Coronavirus") outbreak. Researchers from many countries are collaborating on this project, to help scientists and decision makers to help and communicate.
 
 ## Why this project?
 
-The project was chosen as it deals with analyzing all those factors that in this emergency situation can have **serious consequences** in people's lives, as the isolation, the economic situation and the stress due to the stringent measures to stop the pandemic are part of the side effects of covid-19.
+The project was chosen as it deals with analyzing all the factors that in this emergency situation can have **threatening consequences** in people's lives: the isolation, the economic situation and the stress due to the stringent measures to stop the pandemic are part of the side effects of covid-19.
 The survey on which the next analyzes are based was designed by social scientists and psychologists from more than 50 different universities.
 The study in question presents more than 150,000 individual respondents from more than 50 different countries.
 The following analyzes describe a series of variables selected in the survey, taking as a sample the responses provided by citizens located in Europe who answered the survey between March 30, 2020 and May 30, 2020.
 
-For more info check [this](https://www.nature.com/articles/s41597-020-00784-9) **Nature** article.
+For more informations check [this](https://www.nature.com/articles/s41597-020-00784-9) **Nature** article.
 ```{r}
 #load survey data
 d <- read_survey("csv-choice.csv")
@@ -93,7 +93,6 @@ d$Dem_edu <- str_replace(d$Dem_edu, "^1", "Uninformative response")
 d$Dem_edu_mom <- str_replace(d$Dem_edu_mom, "^1", "Uninformative response")
 ```
 
-
 ```{r}
 #The variable Dem_gender in Spain & Mexico was inverted – Male was recorded as Female and vice versa. Thus, the variable was recoded for SSP (Espanol - Espana) and SME (Espanol - Mexico)
 d <- d %>% 
@@ -103,7 +102,6 @@ d <- d %>%
                                        Dem_gender == "Other/would rather not say" ~ "Other/would rather not say"),
                              Dem_gender))
 ```
-
 
 ```{r}
 #Recode AD_Check, AD_gain and AD_loss (shorten the response and turn the character to factor)
@@ -116,7 +114,6 @@ d <- d %>%
                                  "· If Program D is adopted there is 1/3 probability that nobody will die, and 2/3 probability that 600 people will die." = "Program D")),
          AD_check = factor(AD_check))
 ```
-
 
 ```{r}
 #Convert scale responses to numeric
@@ -161,7 +158,6 @@ d <- d %>% mutate_at(
   "Does not apply to my current situation" = 99
 )
 ```
-
 
 ```{r}
 #Trust in the country’s measures
@@ -213,7 +209,7 @@ EU <- filter(cleaned_d, Country %in% target)
 EU$RecordedDate <- as.Date(EU$RecordedDate , format= "%Y-%m-%d")
 ```
 
-We can see that most respondents are aged **between 20 and 40**.
+The majority of respondents are aged between **20** years old and **40** years old.
 ```{r age, fig.cap="Age of the Respondents", fig.align='center'}
 #note: Missing values are omitted
 ggplot(subset(EU, !is.na(Dem_age)),aes(Dem_age))+
@@ -232,7 +228,8 @@ The majority of the answers come from **women**.
 gnd <-count(EU$Dem_gender)
  gnd = gnd[-4, ] 
 
- plot_ly(gnd, labels = ~x, values = ~freq, type = 'pie') %>%
+ plot_ly(gnd, labels = ~x, values = ~freq,direction ='clockwise',
+          marker = list(colors = c('#003E4C','#1A515E','#346470')),type = 'pie') %>%
    layout(xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
           yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
 ```
@@ -243,17 +240,17 @@ gnd <-count(EU$Dem_gender)
 empl <-count(EU$Dem_employment)
 empl =empl[-7, ] 
 
-plot_ly(empl, labels = ~x, values = ~freq, type = 'pie') %>%
+plot_ly(empl, labels = ~x, values = ~freq,direction ='clockwise',
+        marker = list(colors = c('#003E4C','#688A94','#829DA6','#4E7782','#346470','#1A515E')), type = 'pie') %>%
   layout(xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
          yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
 
 ```
 
-
 # Stress level in Europe
 
 An important point of the project is based on the analysis of **perceived individual stress**, obtained through the PSS Scale, based on the answers to 10 questions, invented by psychologists Cohen, Karmak, and Mermelstrein (1983), using indicators of stress responses, for instance, perceived lack of control over events, pressure from mounting difficulties and feeling upset about unexpected changes. Scores are considered moderate above 2.4, and high above 3.7.
-More infos about **PSS Scale** [here](https://www.midss.org/content/perceived-stress-scale-pss)
+More informations about **PSS Scale** [here](https://www.midss.org/content/perceived-stress-scale-pss)
 
 PSS scores are obtained by reversing responses (e.g., 0 = 4, 1 = 3, 2 = 2, 3 = 1 & 4 = 0) to the four positively stated items (items 4, 5, 7, & 8) and then summing across all scale items. A short 4 item scale can be made from questions 2, 4, 5 and 10 of the PSS 10 item scale.
 
@@ -291,8 +288,7 @@ eu_stress <- select(EU,Country, Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
   mutate(total_stress = rowMeans(select(., -Country)))
 ```
 
-
-```{r stressplot, fig.cap="Levels of stress by Country", fig.align='center'}
+```{r stressplot, fig.cap="Level of stress by Country", fig.align='center'}
 ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
   geom_col(fill= "#006978")+
   ylim(0,5)+
@@ -305,7 +301,7 @@ ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
         axis.text.y = element_text(size=10, hjust = 1))
 
 ```
-Levels of stress were **moderate or lower** in many countries. Poland and Croatia reported the highest levels of stress in Europe,and Denmark and the Netherlands the lowest.
+Levels of stress were **moderate or lower** in many countries. Poland and Croatia reported the highest levels of stress in Europe, Denmark and Netherlands the lowest.
 
 ## Are men or women more stressed?
 ```{r genderstress, echo=TRUE}
@@ -340,8 +336,9 @@ ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) +
         axis.text.x = element_text(angle=65, vjust=0.6, size = 10), axis.line.y = element_line(size = 0.5),
         axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 ```
-In fact we can see that **women** results more stressed then men, in line with [this](https://psycnet.apa.org/record/1999-10525-006)
-Psychological article, many women also have to think about the housework and the children.
+From what emerges **women** results more stressed then men.
+In line with [this](https://psycnet.apa.org/record/1999-10525-006)
+Psychological article.
 
 ## Which is the most stressed employment?
 ```{r stress employment, echo=TRUE}
@@ -376,9 +373,8 @@ ggplot(data=subset(eu_stress_empl, !is.na(Dem_employment)),
         axis.text.x = element_text(angle=50, vjust=0.6, size = 10, margin = margin(t=15)), axis.line.y = element_line(size = 0.5),
         axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 ```
-**Student** is the most stressed category, as expected, due to isolation and social distancing;
-Poland is the most stressed Nation and in fact in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
-article we can see that University Students recorded an highly level of stress during the Covid-19 pandemic.
+The most stressed category is the one of the **students**, as expected, due to isolation and social distancing. 
+[This](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/) article stated that Polish University's students recorded an higher level of stress during the Covid-19 pandemic. Notably, Poland is also the most stressed Country.
 
 ## How stress level changed in Europe during the first weeks of Covid pandemic?
 ```{r stressduringtime, echo=TRUE}
@@ -407,12 +403,6 @@ eu_stress_2months <- select(filter(EU,RecordedDate=="2020-03-30"|
          Rate_PSS10_UCLA10=mean(Scale_PSS10_UCLA_10,na.rm=TRUE))%>%
   mutate(total_stress = rowMeans(select(., -RecordedDate)))
 ```
- Predictive model of stress during the **first weeks** of the pandemic.
-```{r pred, echo=TRUE}
-mod = lm( total_stress ~RecordedDate, data = eu_stress_2months)
-summary(mod)
-mod$coefficients
-```
 
 ```{r plotstressovertime, fig.cap="Levels of stress during the first weeks of the pandemic"}
 ggplot(eu_stress_2months, aes(RecordedDate, total_stress)) + 
@@ -421,10 +411,7 @@ ggplot(eu_stress_2months, aes(RecordedDate, total_stress)) +
                    xend=RecordedDate, 
                    y=0, 
                    yend=total_stress)) + 
-  geom_abline(intercept = mod$coefficients[1], 
-              slope = mod$coefficients[2], 
-              color = "red")+
-  ylim(0,3)+
+  ylim(0,4)+
   scale_x_date(date_breaks = "1 months", date_labels = "%B") +
   theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
@@ -434,11 +421,7 @@ ggplot(eu_stress_2months, aes(RecordedDate, total_stress)) +
         axis.line.y = element_line(size = 0.5),axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 
 ```
-The stress level in the first two weeks **was higher** than the model predicted, 
-in the third week it decreased a bit and then increased and repeated 
-the cycle until the end of May. Unexpectedly in the end of the May the stress level 
-increased again, it is weird because typically with the begginig of summer people should
-be less stressed; unfortunately we don't have any data that will confirm this trend.
+Level of stress remained fairly stable over the middle of April, with a negligible decrease in the second half of the month. Notably, stress level increased at the end of May and that is odd because with the beginning of summer, people should be less stressed. We do not have any data that will confirm this trend.
 
 # Geo Map of stress level
 
@@ -525,7 +508,7 @@ ggplot() +
     data = showCoords,
     aes(x = long, y = lat, group = group, fill = total_stress),
     colour = "black", size = 0.1) +
-  scale_fill_continuous(high = "#132B43", low = "#56B1F7", name="Mean of stress levels")+
+  scale_fill_continuous(high = "#003e4c", low = "#4797a7", name="Stress levels")+
   scale_x_continuous(element_blank(), breaks = NULL) +
   scale_y_continuous(element_blank(), breaks = NULL) +
   coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73))
@@ -533,7 +516,7 @@ ggplot() +
 
 # Sources of Distress 
 
-Now the analysis will focus on the **cause** of the stress of the respondents, asking them questions regarding various factors that represent a source of stress.
+The analysis will focus on the **cause** of stress of the respondents, obtaining the data through asking them questions regarding various factors that represent a source of stress.
 
 ```{r stress source, echo=TRUE}
 eu_stress_source <- select(EU, Expl_Distress_1:Expl_Distress_24)%>%
@@ -571,11 +554,10 @@ ggplot(eu_stress_source, aes(reorder(stress_source,mean), mean)) +
 The results indicate that most respondents are concerned about the state of the **national economy**. Economic considerations were followed closely by health-related risks, such as the risks of being hospitalised and of contracting the new disease.
 
 # Trust in institutions
-Partecipants were asked how much they trusted six key **institutions** in relation to the Covid-19 emergency
+Partecipants were asked how much they trusted six major **institutions** in relation to the Covid-19 emergency
 (on a scale from 1 = not at all to 10 = completely), in particular partecipants were asked about their trust
-towards World Health Organization(WHO), the national governments’ efforts to tackle the COVID19, the Police,
+towards World Health Organization (WHO), the national governments’ efforts to tackle the COVID19, the Police,
 the civil service, the national government and the healthcare systems.
-
 
 [Here](https://www.oecd.org/governance/oecd-guidelines-on-measuring-trust-9789264278219-en.htm) there are **OECD guidelines** on measuring institutions trust.
 
@@ -603,7 +585,7 @@ ggplot(eu_trust, aes(reorder(trust,mean), mean)) +
         axis.title.x =  element_text(margin = margin(t = 5)),
         axis.text.y=element_text(size=8))
 ```
-Europeans reported only **medium** level of trust at all, with the highest levels of trust for their countries’ healthcare system and the WHO.
+Europeans reported only **medium** level of trust at all, with the highest levels of confidence for their countries’ healthcare system and the WHO.
 Notably, Countries governments reported the lowest level of trust.
 
 ## How much citizens trust their own governments?
@@ -629,22 +611,21 @@ ggplot(eu_mean_oecd1, aes(reorder(Country,Rate_OECD_insititutions_1),
         axis.text.y=element_text(size=10))
 ```
 
-Noably, we see that **Poland** is the most stressed Nation but also 
- one of the Country in which the population trust least in their own government
-  **Finland**, on the other hand, is the nation with the least stress related to Covid,
- and it is also one of the Nations in which the population trust
- most in their own government.
+Notably, **Poland** is the most stressed Nation but it is also 
+one of the country in which the population trust least in their own government.
+**Finland**, on the other hand, is the nation with the least stress related to Covid,
+and it is also one of the countries in which the population places an high level of compliance for their own government.
 
- ## How much citizens trust the government’s effort to handle the pandemic?
- ```{r trustoecd4, echo="TRUE"}
+## How much citizens trust the government’s effort to handle the pandemic?
+```{r trustoecd4, echo="TRUE"}
  
  eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
    ddply( .(Country), summarize,
           Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
    arrange(desc( Rate_OECD_insititutions_4))
- ```
+```
  
- ```{r trustoecd4plot, fig.cap="Trust towards government’s effort to handle Coronavirus"}
+```{r trustoecd4plot, fig.cap="Trust towards government’s effort to handle Coronavirus"}
  ggplot(eu_mean_oecd4, aes(reorder(Country,Rate_OECD_insititutions_4),
                            Rate_OECD_insititutions_4 )) +
    geom_col(fill= "#006978")+
@@ -665,7 +646,6 @@ It was also asked participants to judge the **appropriateness
 of the countries’ measures** in response to the COVID-19 on a scale from 0 (too little),
 to 5 (appropriate, the black dashed line in the graph), to 10 (too much).
 
-
 ```{r trustinc, echo=TRUE}
 eu_trustinc <- select(EU,Country,Trust_countrymeasure) %>%
   group_by(Country) %>%
@@ -680,9 +660,9 @@ ggplot(eu_trustinc, aes(reorder(Country, Mean), Mean)) +
   coord_flip()+
 theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
-  labs(y="Country", x="Mean")+
+  labs(y="Mean")+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
-        axis.title.y =  element_text(margin = margin(r = 5)),
+        axis.title.y =  element_blank(),
         axis.title.x =  element_text(margin = margin(t = 5)),
         axis.text.y=element_text(size=10))
         
@@ -721,7 +701,7 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
                    segment.color = 'grey50') +
   theme_economist(dkpanel=TRUE) +
   scale_colour_economist()+
-  labs(y="Mean of Compliances", x="Mean of trust towards governemts efforts")+
+  labs(y="Mean of Compliances", x="Mean of trust towards governments efforts")+
   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),
        axis.title.y =  element_text(margin = margin(r = 5)),
        axis.title.x =  element_text(margin = margin(t = 5)),
@@ -731,7 +711,7 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
               color = "red")
 ```
 From what emerges **Poland** not having confidence in the measures taken
-by governments does not even try to reduce transmission,
+by governments and does not even try to reduce transmission,
 while **Denmark** is in the opposite situation.
 In countries with higher trust towards governments ’efforts, citizens were also more 
 likely to report higher levels of compliance with directives aimed at controlling the 
@@ -772,19 +752,35 @@ ggplot(eu_trust2m, aes(RecordedDate, Rate_OECD)) +
 
 ```
 In the first month the trust for government’s effort to handle Coronavirus 
-appears to increase, due to more stringent measures. But with **beginning of the summer season** Trust level seems to be decreasing,
+appears to increase, as a result of more stringent measures. With the **beginning of the summer season** trust level appears to decrease;
 probably because in many countries, including ours, Italy, the measures were almost null.
 
 # Conclusions
 
+```{r trustcorrplot, fig.cap="Correlation between level of stress and trust in governments"}
+p <- merge(eu_stress,eu_mean_oecd1)
+ggplot(data=p, aes(x=Country)) +
+  geom_bar(aes(y=Rate_OECD_insititutions_1,fill=total_stress), stat="identity", position ="identity") +
+  coord_flip()+
+  theme_economist(dkpanel=TRUE) +
+  labs(y = "Trust in governments")+
+  theme(axis.title.x = element_text(size = 15,margin=margin(t=5)),axis.title.y=element_blank(),
+        axis.text.y = element_text(size = 9),legend.text.align = 0.5,axis.text.x = element_text(size = 10),
+        legend.text = element_blank(),legend.key.width=unit(0.5,"cm"),legend.position="right",
+        legend.title=element_text(size=10))+
+  scale_fill_continuous(high = "#003e4c", low = "#4797a7", name="Stress level")+
+  guides(fill = guide_colourbar(title.position = "top",
+                                title.hjust = .5))
+
+```
+
 In conclusions, **Student** is the most stressed category, as expected due to isolation and social distancing;
-Poland is the most stressed Nation in Europe and in fact in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
-article we can see that Polish University Students recorded an highly level of stress during the Covid-19 pandemic.
-**Women** results more stressed then men, as said in [this](https://psycnet.apa.org/record/1999-10525-006)
+Poland is the most stressed Nation in Europe and as reported in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
+article Polish University's Students recorded an highly level of stress during the Covid-19 pandemic.
+**Women** results more stressed than men, as stated in [this](https://psycnet.apa.org/record/1999-10525-006)
 Psychological article.
-Notably, around the Europe the **Country's healthcare system** is trusted followed by the **WHO**. 
-The countries of northern Europe result **less stressed** and trust more in their authority rules to block the pandemic ,on the other side 
-est-European countries are **most stressed** and trust less in their governments and in measure taken to handle the pandemic
+Remarkably, around the Europe the **Country's healthcare system** is trusted followed by the **WHO**. 
+There is a strong correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they are also the same ones with an high level of compliance for their governments.
 
 # Presentation
 Click [**Here**]( ./presentation.html ) to start.
