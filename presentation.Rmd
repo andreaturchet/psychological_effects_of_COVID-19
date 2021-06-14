@@ -263,8 +263,8 @@ The majority of the answers come from **women**.
 # Stress level in Europe
 #
 
-The analysis of **perceived individual stress** are obtained through the PSS Scale, that was invented by the psychologists Cohen, Karmak, and Mermelstrein (1983). The Scale use indicators of stress responses, for instance, perceived lack of control over events, pressure from mounting difficulties and feeling upset about unexpected changes. Scores are considered moderate above 2.4 and high above 3.7.
-More informations about the **PSS Scale** [here.](https://www.midss.org/content/perceived-stress-scale-pss)
+The analysis of **perceived individual stress** are obtained through the Perceived Stress Scale, that was invented by the psychologists Cohen, Karmak, and Mermelstrein (1983). The Scale use indicators of stress responses, for instance, perceived lack of control over events, pressure from mounting difficulties and feeling upset about unexpected changes. Scores are considered moderate above 2.4 and high above 3.7.
+More informations about the **PS Scale** [here.](https://www.midss.org/content/perceived-stress-scale-pss)
 
 ```{r, out.width = "120px", out.height= "120px", fig.align='right', echo=FALSE}
 
@@ -725,8 +725,6 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
               color = "red")
 ```
 
-#
-Notably, **Portugal** reported higher level of compliance than the model  would predict based on the acceptance of government efforts. An outlier in the other direction, **Latvia** reported lower levels of compliance than those the model predicted, given level of trust.
 
 # Conclusions
 #
