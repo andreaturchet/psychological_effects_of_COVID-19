@@ -774,7 +774,7 @@ ggplot(data=p, aes(x=Country)) +
 
 ```
 
-```{r correlation}
+```{r correlation,echo=TRUE}
 (r = cor(p$total_stress, p$Rate_OECD_insititutions_1))
 r^2
 
