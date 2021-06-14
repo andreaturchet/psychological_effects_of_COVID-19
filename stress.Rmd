@@ -637,7 +637,7 @@ and it is also one of the countries in which the population places an high level
    theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
          axis.title.x =  element_text(margin = margin(t = 5)),
          axis.text.y=element_text(size=10))
- ```
+```
  Similar patterns as the trust level in the governments, with **Bulgaria** that reported the lowest level of 
  trust for the national effort to handle the pandemic.
  
