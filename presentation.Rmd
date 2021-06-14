@@ -703,7 +703,7 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
 # Conclusions
 
 #
-In conclusion, there is a strong correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they have also an high level of confidence in their governments.
+In conclusion, there is a strong negative correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they have also an high level of confidence in their governments.
 
 ```{r trustcorrplot,echo=FALSE,fig.width=6,fig.height=3.5,fig.align='center'}
 p <- merge(eu_stress,eu_mean_oecd1)

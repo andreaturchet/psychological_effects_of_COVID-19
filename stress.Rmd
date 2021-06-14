@@ -774,13 +774,22 @@ ggplot(data=p, aes(x=Country)) +
 
 ```
 
+```{r correlation}
+(r = cor(p$total_stress, p$Rate_OECD_insititutions_1))
+r^2
+
+```
+
+
+
+
 In conclusions, **Student** is the most stressed category, as expected, due to isolation and social distancing;
 Poland is the most stressed Nation in Europe and as reported in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
 article Polish University's Students recorded an highly level of stress during the Covid-19 pandemic.
 **Women** result more stressed than men, as stated in [this](https://psycnet.apa.org/record/1999-10525-006)
 Psychological article.
 Remarkably, around the Europe the **Country's healthcare system** is trusted followed by the **WHO**. 
-There is a strong correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they have also an high level of confidence in their governments.
+There is a strong negative correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they have also an high level of confidence in their governments.
 
 # Presentation
 Click [**Here**]( ./presentation.html ) to start.
