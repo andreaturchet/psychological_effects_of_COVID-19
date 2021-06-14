@@ -321,7 +321,7 @@ eu_stress_gender <- select(filter(EU,Dem_gender=="Male" | Dem_gender=="Female"),
   mutate(total_stress = rowMeans(select(., -Dem_gender)))
 ```
 
-```{r genderstressplot, fig.cap="Levels of stress by Gender", fig.align='center'}
+```{r genderstressplot, fig.cap="Level of stress by Gender", fig.align='center'}
 ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) + 
   geom_point(size=7) + 
   geom_segment(aes(x=Dem_gender, 
@@ -336,7 +336,7 @@ ggplot(eu_stress_gender, aes(Dem_gender, total_stress)) +
         axis.text.x = element_text(angle=65, vjust=0.6, size = 10), axis.line.y = element_line(size = 0.5),
         axis.text.y = element_text(size=10,vjust=0.5,hjust = 1.25))
 ```
-From what emerges **women** results more stressed then men.
+From what emerges **women** result more stressed then men.
 In line with [this](https://psycnet.apa.org/record/1999-10525-006)
 Psychological article.
 
@@ -404,7 +404,7 @@ eu_stress_2months <- select(filter(EU,RecordedDate=="2020-03-30"|
   mutate(total_stress = rowMeans(select(., -RecordedDate)))
 ```
 
-```{r plotstressovertime, fig.cap="Levels of stress during the first weeks of the pandemic"}
+```{r plotstressovertime, fig.cap="Level of stress during the first weeks of the pandemic"}
 ggplot(eu_stress_2months, aes(RecordedDate, total_stress)) + 
   geom_point(size=7) + 
   geom_segment(aes(x=RecordedDate, 
@@ -426,7 +426,7 @@ Level of stress remained fairly stable over the middle of April, with a negligib
 # Geo Map of stress level
 
 ## Visualizing a detailed map of stress level in Europe.
-```{r map, fig.cap="Levels of stress during the first weeks of the pandemic, based on PSS Scale", fig.align='center'}
+```{r map, fig.cap="Level of stress during the first weeks of the pandemic, based on PSS Scale", fig.align='center'}
 worldMap <- getMap()
 ## identify EU countries
 show <- which(worldMap$NAME %in% eu_stress$Country)
@@ -551,7 +551,7 @@ ggplot(eu_stress_source, aes(reorder(stress_source,mean), mean)) +
         axis.title.x =  element_text(margin = margin(t = 5),hjust = 0.53),
         axis.text.y=element_text(size=8))
 ```
-The results indicate that most respondents are concerned about the state of the **national economy**. Economic considerations were followed closely by health-related risks, such as the risks of being hospitalised and of contracting the new disease.
+The results indicate that most respondents are concerned about the state of the **national economy**. Economic considerations were followed closely by health-related risks, such as the risks of being hospitalized and of contracting the new disease.
 
 # Trust in institutions
 Partecipants were asked how much they trusted six major **institutions** in relation to the Covid-19 emergency
@@ -668,9 +668,9 @@ theme_economist(dkpanel=TRUE) +
         
 ```
 **Slovakia** and **Slovenia** were those countries where citizens considered the measures stronger than necessary; in the plot, the vertical mid-line indicates that the measures are appropriate.
-**France** and **Hungary** citizens judged their governments’response less than appropriate.
+**France** and **Hungary** citizens judged their governments’ response less than appropriate.
 
-### There is correlation between confidence in the measures taken by governments to tackle covid and the actions that the population has taken to reduce transmission?
+### There is correlation between confidence in the measures taken by governments to tackle Covid and the actions that the population has taken to reduce transmission?
 
 ```{r confcorr, echo=TRUE}
 eu_conf_corr <- select(EU,Country,OECD_insititutions_6,Compliance_1:Compliance_6) %>%
@@ -774,13 +774,13 @@ ggplot(data=p, aes(x=Country)) +
 
 ```
 
-In conclusions, **Student** is the most stressed category, as expected due to isolation and social distancing;
+In conclusions, **Student** is the most stressed category, as expected, due to isolation and social distancing;
 Poland is the most stressed Nation in Europe and as reported in [this](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7532061/)
 article Polish University's Students recorded an highly level of stress during the Covid-19 pandemic.
-**Women** results more stressed than men, as stated in [this](https://psycnet.apa.org/record/1999-10525-006)
+**Women** result more stressed than men, as stated in [this](https://psycnet.apa.org/record/1999-10525-006)
 Psychological article.
 Remarkably, around the Europe the **Country's healthcare system** is trusted followed by the **WHO**. 
-There is a strong correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they are also the same ones with an high level of compliance for their governments.
+There is a strong correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they have also an high level of confidence in their governments.
 
 # Presentation
 Click [**Here**]( ./presentation.html ) to start.
