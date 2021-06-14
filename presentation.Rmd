@@ -308,7 +308,7 @@ eu_stress <- select(EU,Country, Scale_PSS10_UCLA_1:Scale_PSS10_UCLA_10) %>%
   mutate(total_stress = rowMeans(select(., -Country)))
 ```
 
-The levels of stress were **moderate or lower** in several countries.<br> Poland and Croatia reported the highest level of stress in Europe while Denmark and the Netherlands the lowest.
+The level of stress was **moderate or lower** in several countries.<br> Poland and Croatia reported the highest level of stress in Europe while Denmark and the Netherlands the lowest.
 
 ```{r eustressplot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
 ggplot(eu_stress, aes(reorder(Country, total_stress), total_stress)) +
@@ -484,6 +484,7 @@ ggplot() +
   scale_x_continuous(element_blank(), breaks = NULL) +
   scale_y_continuous(element_blank(), breaks = NULL) +
   coord_map(xlim = c(-26, 47),  ylim = c(32.5, 73))
+       
 ```
 
 # Sources of Distress
@@ -613,34 +614,7 @@ ggplot(eu_mean_oecd1, aes(reorder(Country,Rate_OECD_insititutions_1),
         axis.text.y=element_text(size=7))
 ```
 
-## How much citizens trust <br> the government’s effort <br> to handle the <br> pandemic?
 
-#
- 
-Similar patterns as the trust level in the governments, with **Bulgaria** that reported the lowest level of 
-confidence for the national effort to handle the pandemic.
- 
-```{r trustoecd4, echo="TRUE",include=FALSE}
- 
- eu_mean_oecd4 <- select(EU,Country,OECD_insititutions_4) %>%
-   ddply( .(Country), summarize,
-          Rate_OECD_insititutions_4=mean(OECD_insititutions_4,na.rm=TRUE))%>%
-   arrange(desc( Rate_OECD_insititutions_4))
-```
- 
-```{r trustoecd4plot,echo=FALSE,fig.width=6,fig.height=4,fig.align='center'}
- ggplot(eu_mean_oecd4, aes(reorder(Country,Rate_OECD_insititutions_4),
-                           Rate_OECD_insititutions_4 )) +
-   geom_col(fill= "#422040")+
-   ylim(0,10)+
-   coord_flip()+
-   theme_wsj() +
-   labs(y="Mean")+
-   theme(axis.line.y = element_line(size = 0.5), axis.text.x=element_text(size=10),axis.title.y=element_blank(),
-         axis.title.x =  element_text(margin = margin(t = 5),size = 15),
-         axis.text.y=element_text(size=8))
-```
- 
 # Trust in <br> Countries' <br> Measure
 
 #
@@ -727,12 +701,6 @@ ggplot(eu_conf_corr, aes(Rate_OECD,total_Compl)) +
 
 
 # Conclusions
-#
-- Poland's citizens have the highest level of stress.
-- Student is the most stressed category.
-- Women result more frustrated than men.
-- European Citizens are scared about National economy.
-- Country's Healthcare system is trusted.
 
 #
 In conclusion, there is a strong correlation between an high level of stress and a lack of trust in governments, indeed citizens of northern Europe's countries are less stressed and they have also an high level of confidence in their governments.
